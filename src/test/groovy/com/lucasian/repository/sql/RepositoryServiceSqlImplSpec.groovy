@@ -3,8 +3,10 @@ package com.lucasian.repository.sql
 import com.lucasian.repository.RepositoryItem
 import com.lucasian.repository.RepositoryItemContents
 import com.lucasian.repository.RepositoryService
+import org.apache.tika.Tika
 import org.springframework.jdbc.datasource.embedded.EmbeddedDatabaseBuilder
 import org.springframework.jdbc.datasource.embedded.EmbeddedDatabaseType
+import spock.lang.IgnoreRest
 import spock.lang.Specification
 
 import javax.activation.DataSource
@@ -17,16 +19,19 @@ class RepositoryServiceSqlImplSpec extends Specification{
     def setup(){
         repositoryService = new RepositoryServiceSqlImpl()
         repositoryService.dataSource = new EmbeddedDatabaseBuilder()
-                .setType(EmbeddedDatabaseType.HSQL)
-//                .addScript("classpath:schema.sql")
+                .setType(EmbeddedDatabaseType.H2)
+                .addScript("classpath:schema.sql")
                 .build();
+        repositoryService.tika = new Tika()
     }
     def shutdown(){
         repositoryService.dataSource.shutdown()
     }
+    @IgnoreRest
     def "Should store file"(){
         setup:
-        RepositoryItem item = getTestNode("testFile","/folder/one")
+        println new File('src/test/resources/folder/one/testFile.txt')
+        RepositoryItem item = getTestNode("testFile.txt","folder/one")
         when:
         String id = repositoryService.storeItemAndGetId(item)
         then:
@@ -66,9 +71,14 @@ class RepositoryServiceSqlImplSpec extends Specification{
         third
     }
     def getTestNode(String name, String path){
+        File file = new File('src/test/resources/'+path+'/'+name)
         new RepositoryItem(
                 name: name,
-                path: path
+                path: path,
+                contents: new RepositoryItemContents(
+                        metadata: [:],
+                        binary: file.getBytes()
+                )
         )
     }
 }

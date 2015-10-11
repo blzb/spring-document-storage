@@ -13,7 +13,7 @@ class RepositoryItem {
     String version
     String mimeType
     RepositoryItemContents contents
-    List<String> tags
+    List<String> tags = ['un tags']
     String toString() {
         "name[${name}] path[${path}] mimeType[${mimeType}] id[${id}]"
     }

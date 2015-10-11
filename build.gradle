@@ -41,10 +41,11 @@ dependencies {
     // We use the latest groovy 2.x version for building this library
     compile 'org.codehaus.groovy:groovy-all:2.4.4'
     compile 'org.springframework.boot:spring-boot-starter-jdbc:1.2.6.RELEASE'
-
-    // We use the awesome Spock testing and specification framework
+    compile 'org.apache.tika:tika-core:1.10'
+    compile 'org.apache.tika:tika-parsers:1.10'
+// We use the awesome Spock testing and specification framework
     testCompile 'org.spockframework:spock-core:1.0-groovy-2.4'
-    testCompile 'org.hsqldb:hsqldb:2.0.0'
+    testCompile 'com.h2database:h2:1.4.189'
 }
 
 jacocoTestReport {
