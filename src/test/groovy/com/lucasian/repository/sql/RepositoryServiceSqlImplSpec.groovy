@@ -67,6 +67,7 @@ class RepositoryServiceSqlImplSpec extends Specification {
         RepositoryItemContents result = repositoryService.getContentByPath('folder/one/testFile.pdf', '1')
         then:
         result
+        result.binary.size()>0
     }
 
     def "Should retrieve file by id"() {
@@ -76,6 +77,7 @@ class RepositoryServiceSqlImplSpec extends Specification {
         RepositoryItemContents result = repositoryService.getContentById(id, '1')
         then:
         result
+        result.binary.size()>0
     }
 
     @Ignore
