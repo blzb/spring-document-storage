@@ -43,9 +43,10 @@ dependencies {
     compile 'org.springframework.boot:spring-boot-starter-jdbc:1.2.6.RELEASE'
     compile 'org.apache.tika:tika-core:1.10'
     compile 'org.apache.tika:tika-parsers:1.10'
+
 // We use the awesome Spock testing and specification framework
     testCompile 'org.spockframework:spock-core:1.0-groovy-2.4'
-    testCompile 'com.h2database:h2:1.4.189'
+    compile 'com.h2database:h2:1.4.189'
 }
 
 jacocoTestReport {
