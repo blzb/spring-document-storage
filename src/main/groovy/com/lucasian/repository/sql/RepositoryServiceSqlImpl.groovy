@@ -5,11 +5,13 @@ import com.lucasian.repository.RepositoryItemContents
 import com.lucasian.repository.RepositoryService
 import groovy.sql.GroovyResultSet
 import groovy.sql.Sql
+import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import org.apache.tika.Tika
 import org.apache.tika.metadata.Metadata
 
 import javax.sql.DataSource
+import javax.swing.text.html.Option
 
 import static java.util.UUID.randomUUID
 
@@ -18,6 +20,7 @@ import static java.util.UUID.randomUUID
  * Created by blzb on 10/8/15.
  */
 @Slf4j
+@CompileStatic
 class RepositoryServiceSqlImpl implements RepositoryService {
 
   private static final String DB = 'H2'
@@ -27,6 +30,11 @@ class RepositoryServiceSqlImpl implements RepositoryService {
 
   @Override
   String storeItemAndGetId(RepositoryItem item) {
+    if (!item.contents || !item.contents.binary) {
+      throw new IllegalStateException('empty file')
+    }else{
+      println('1')
+    }
     if (!item.path.contains(item.name)) {
       if (!item.path.endsWith('/')) {
         item.path += '/'
@@ -34,7 +42,7 @@ class RepositoryServiceSqlImpl implements RepositoryService {
       item.path += item.name
     }
     Map maxVersionResult = getMaxVersionByPath(item.path)
-    Integer maxVersion = maxVersionResult['max_version']
+    Integer maxVersion = maxVersionResult['max_version'] as Integer
     if (maxVersion) {
       item.version = maxVersion + 1
       item.id = maxVersionResult['id']
@@ -44,7 +52,6 @@ class RepositoryServiceSqlImpl implements RepositoryService {
       item.version = 1
     }
     addMimeType(item)
-    log.info('The mime type: {}', item.mimeType)
     Sql sql = new Sql(dataSource)
     Map properties = item.properties
     properties.binary = item.contents.binary
@@ -77,56 +84,56 @@ class RepositoryServiceSqlImpl implements RepositoryService {
     Sql sql = new Sql(dataSource)
     String query = "Select id, path, name, last_modified_date, created_at_date, version, mime_type, tags from repository_document where path like '${path}%'"
     sql.rows(query).collect() {
-      getItem(it)
+      getItem(it).get()
     }
   }
 
   @Override
-  RepositoryItem getItemByPath(String path) {
+  Optional<RepositoryItem> getItemByPath(String path) {
     String version = getMaxVersionByPath(path)['max_version']
     getItemByPath(path, version)
   }
 
   @Override
-  RepositoryItem getItemByPath(String path, String version) {
+  Optional<RepositoryItem> getItemByPath(String path, String version) {
     Sql sql = new Sql(dataSource)
     String query = "Select id, path, name, last_modified_date, created_at_date, version, mime_type, tags from repository_document where path = :path and version = :version"
     getItem(sql.firstRow(query, [path: path, version: version]))
   }
 
   @Override
-  RepositoryItem getItemById(String id) {
+  Optional<RepositoryItem> getItemById(String id) {
     String version = getMaxVersionById(id)['max_version']
     getItemById(id, version)
   }
 
   @Override
-  RepositoryItem getItemById(String id, String version) {
+  Optional<RepositoryItem> getItemById(String id, String version) {
     Sql sql = new Sql(dataSource)
     String query = "Select id, path, name, last_modified_date, created_at_date, version, mime_type, tags from repository_document where id = :id and version = :version"
     getItem(sql.firstRow(query, [id: id, version: version]))
   }
 
   @Override
-  RepositoryItemContents getContentByPath(String path, String version) {
+  Optional<RepositoryItemContents> getContentByPath(String path, String version) {
     String query = "Select binary from repository_document where path = '${path}' and version = ${version}"
     getContentsByQuery(query)
   }
 
   @Override
-  RepositoryItemContents getContentByPath(String path) {
+  Optional<RepositoryItemContents> getContentByPath(String path) {
     String version = getMaxVersionByPath(path)['max_version']
     getContentByPath(path, version)
   }
 
   @Override
-  RepositoryItemContents getContentById(String id, String version) {
+  Optional<RepositoryItemContents> getContentById(String id, String version) {
     String query = "Select binary from repository_document where id = '${id}' and version = ${version}"
     getContentsByQuery(query)
   }
 
   @Override
-  RepositoryItemContents getContentById(String id) {
+  Optional<RepositoryItemContents> getContentById(String id) {
     String version = getMaxVersionById(id)['max_version']
     String query = "Select binary from repository_document where id = '${id}' and version = ${version}"
     getContentsByQuery(query)
@@ -145,26 +152,25 @@ class RepositoryServiceSqlImpl implements RepositoryService {
   }
 
   private Map getMaxVersionById(String id) {
-    String query = "Select max(version) as max_version, id from repository_document where id = '${id}'"
+    String query = "Select max(version) as max_version, id from repository_document where id = '${id}' GROUP BY ID"
     getMaxVersionWithQuery(query)
   }
 
   private Map getMaxVersionWithQuery(String query) {
     Sql sql = new Sql(dataSource)
-    log.debug('THE QUERY:{}', query)
     Map results = sql.firstRow(query)
     results ?: [:]
   }
 
-  private RepositoryItemContents getContentsByQuery(String query) {
+  private Optional<RepositoryItemContents> getContentsByQuery(String query) {
     Sql sql = new Sql(dataSource)
     RepositoryItemContents contents
-    sql.eachRow(query) { GroovyResultSet row ->
-      contents = new RepositoryItemContents(
-        binary: row.getBytes('BINARY')
-      )
-    }
-    contents
+    sql.eachRow(query, 1, 0,
+      { GroovyResultSet row ->
+        contents = new RepositoryItemContents()
+        contents.binary = row.getBytes('BINARY')
+      })
+    Optional.ofNullable(contents)
   }
 
   void addMimeType(RepositoryItem repositoryItem) {
@@ -173,35 +179,36 @@ class RepositoryServiceSqlImpl implements RepositoryService {
     metadata.add(Metadata.RESOURCE_NAME_KEY, repositoryItem.getName())
 
     repositoryItem.mimeType = tika.detect(inputStream, metadata)
-    log.info('Plain text:[{}]', tika.parseToString(inputStream, metadata))
   }
 
   String extractPlainText(RepositoryItem repositoryItem) {
-    log.info('Contents size:{}', repositoryItem.contents.binary.size())
     InputStream inputStream = new ByteArrayInputStream(repositoryItem.contents.binary)
     Metadata metadata = new Metadata()
     metadata.add(Metadata.RESOURCE_NAME_KEY, repositoryItem.getName())
     String plainText
     plainText = tika.parseToString(inputStream, metadata)
-    log.info('Plain text:[{}]', plainText)
     plainText
   }
 
-  private RepositoryItem getItem(Map columnValues) {
+  private Optional<RepositoryItem> getItem(Map columnValues) {
     if (columnValues?.size()) {
+      RepositoryItem item
       columnValues.with {
         String tagList = tags
-        new RepositoryItem(
-          path: path,
-          name: name,
-          version: version,
-          mimeType: mime_type,
-          id: id,
-          tags: tagList.split(','),
-          lastModifiedDate: last_modified_date,
-          createdAtDate: created_at_date
+        item = new RepositoryItem(
+          path: path as String,
+          name: name as String ,
+          version: version as String,
+          mimeType: mime_type as String,
+          id: id as String,
+          tags: tagList.split(',').toList(),
+          lastModifiedDate: last_modified_date as Date,
+          createdAtDate: created_at_date as Date
         )
       }
+      Optional.of(item)
+    } else {
+      Optional.empty()
     }
   }
 }
