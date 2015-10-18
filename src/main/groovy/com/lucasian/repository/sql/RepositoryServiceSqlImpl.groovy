@@ -7,10 +7,7 @@ import groovy.sql.GroovyResultSet
 import groovy.sql.Sql
 import groovy.util.logging.Slf4j
 import org.apache.tika.Tika
-import org.apache.tika.detect.DefaultDetector
-import org.apache.tika.detect.Detector
 import org.apache.tika.metadata.Metadata
-import org.apache.tika.mime.MediaType
 
 import javax.sql.DataSource
 
@@ -36,17 +33,19 @@ class RepositoryServiceSqlImpl implements RepositoryService {
       }
       item.path += item.name
     }
-    Integer maxVersion = getMaxVersion(item.path)
-    if(maxVersion){
+    Map maxVersionResult = getMaxVersionByPath(item.path)
+    Integer maxVersion = maxVersionResult['max_version']
+    if (maxVersion) {
       item.version = maxVersion + 1
-    }else{
+      item.id = maxVersionResult['id']
+    } else {
+      String uuid = randomUUID()
+      item.id = uuid
       item.version = 1
     }
     addMimeType(item)
     log.info('The mime type: {}', item.mimeType)
     Sql sql = new Sql(dataSource)
-    String uuid = randomUUID()
-    item.id = uuid
     Map properties = item.properties
     properties.binary = item.contents.binary
     properties.textContent = extractPlainText(item)
@@ -73,12 +72,6 @@ class RepositoryServiceSqlImpl implements RepositoryService {
     item.id
   }
 
-  private Integer getMaxVersion(String path){
-    Sql sql = new Sql(dataSource)
-    Integer maxVersion = sql.firstRow("Select max(version) as max_version from repository_document where path = :path ",[path: path])['max_version']
-    log.debug('Max version found for content {} is {}', path, maxVersion)
-    maxVersion
-  }
   @Override
   List<RepositoryItem> listItemsInPath(String path) {
     Sql sql = new Sql(dataSource)
@@ -89,16 +82,29 @@ class RepositoryServiceSqlImpl implements RepositoryService {
   }
 
   @Override
-  RepositoryItem getItemInPath(String path, String version) {
-    Sql sql = new Sql(dataSource)
-    String query = "Select id, path, name, last_modified_date, created_at_date, version, mime_type, tags from repository_document where path = '${path}' and version = ${version}"
-    getItem(sql.firstRow(query))
+  RepositoryItem getItemByPath(String path) {
+    String version = getMaxVersionByPath(path)['max_version']
+    getItemByPath(path, version)
   }
 
   @Override
-  RepositoryItem getItemInPath(String path) {
-    String version = '1'
-    getContentById(path, version)
+  RepositoryItem getItemByPath(String path, String version) {
+    Sql sql = new Sql(dataSource)
+    String query = "Select id, path, name, last_modified_date, created_at_date, version, mime_type, tags from repository_document where path = :path and version = :version"
+    getItem(sql.firstRow(query, [path: path, version: version]))
+  }
+
+  @Override
+  RepositoryItem getItemById(String id) {
+    String version = getMaxVersionById(id)['max_version']
+    getItemById(id, version)
+  }
+
+  @Override
+  RepositoryItem getItemById(String id, String version) {
+    Sql sql = new Sql(dataSource)
+    String query = "Select id, path, name, last_modified_date, created_at_date, version, mime_type, tags from repository_document where id = :id and version = :version"
+    getItem(sql.firstRow(query, [id: id, version: version]))
   }
 
   @Override
@@ -106,16 +112,48 @@ class RepositoryServiceSqlImpl implements RepositoryService {
     String query = "Select binary from repository_document where path = '${path}' and version = ${version}"
     getContentsByQuery(query)
   }
+
   @Override
   RepositoryItemContents getContentByPath(String path) {
-    String version = '1'
+    String version = getMaxVersionByPath(path)['max_version']
     getContentByPath(path, version)
   }
 
   @Override
-  RepositoryItemContents getContentById(String id, String version = '1') {
+  RepositoryItemContents getContentById(String id, String version) {
     String query = "Select binary from repository_document where id = '${id}' and version = ${version}"
     getContentsByQuery(query)
+  }
+
+  @Override
+  RepositoryItemContents getContentById(String id) {
+    String version = getMaxVersionById(id)['max_version']
+    String query = "Select binary from repository_document where id = '${id}' and version = ${version}"
+    getContentsByQuery(query)
+  }
+
+
+  @Override
+  List<RepositoryItem> query(Map<String, ?> filters) {
+    []
+  }
+
+  private Map getMaxVersionByPath(String path) {
+    String query = "Select max(version) as max_version, id from repository_document where path = '${path}' GROUP BY ID"
+
+    getMaxVersionWithQuery(query)
+  }
+
+  private Map getMaxVersionById(String id) {
+    String query = "Select max(version) as max_version, id from repository_document where id = '${id}'"
+    getMaxVersionWithQuery(query)
+  }
+
+  private Map getMaxVersionWithQuery(String query) {
+    Sql sql = new Sql(dataSource)
+    log.debug('THE QUERY:{}', query)
+    Map results = sql.firstRow(query)
+    results ?: [:]
   }
 
   private RepositoryItemContents getContentsByQuery(String query) {
@@ -127,11 +165,6 @@ class RepositoryServiceSqlImpl implements RepositoryService {
       )
     }
     contents
-  }
-
-  @Override
-  List<RepositoryItem> query(Map<String, ?> filters) {
-    []
   }
 
   void addMimeType(RepositoryItem repositoryItem) {
@@ -155,18 +188,20 @@ class RepositoryServiceSqlImpl implements RepositoryService {
   }
 
   private RepositoryItem getItem(Map columnValues) {
-    columnValues.with {
-      String tagList = tags
-      new RepositoryItem(
-        path: path,
-        name: name,
-        version: version,
-        mimeType: mime_type,
-        id: id,
-        tags: tagList.split(','),
-        lastModifiedDate: last_modified_date,
-        createdAtDate: created_at_date
-      )
+    if (columnValues?.size()) {
+      columnValues.with {
+        String tagList = tags
+        new RepositoryItem(
+          path: path,
+          name: name,
+          version: version,
+          mimeType: mime_type,
+          id: id,
+          tags: tagList.split(','),
+          lastModifiedDate: last_modified_date,
+          createdAtDate: created_at_date
+        )
+      }
     }
   }
 }
