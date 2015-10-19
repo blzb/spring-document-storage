@@ -2,27 +2,22 @@ package com.lucasian.repository.sql
 
 import com.lucasian.repository.RepositoryItem
 import com.lucasian.repository.RepositoryItemContents
-import com.lucasian.repository.RepositoryService
 import org.apache.tika.Tika
 import org.springframework.jdbc.datasource.embedded.EmbeddedDatabaseBuilder
 import org.springframework.jdbc.datasource.embedded.EmbeddedDatabaseType
-import spock.lang.Ignore
 import spock.lang.IgnoreRest
 import spock.lang.Specification
-import spock.lang.Unroll
+
 import static java.util.UUID.randomUUID
-
-
-import javax.activation.DataSource
 
 /**
  * Created by blzb on 10/8/15.
  */
-class RepositoryServiceSqlImplSpec extends Specification {
-  RepositoryServiceSqlImpl repositoryService
+class RepositoryServiceH2SqlImplSpec extends Specification {
+  RepositoryServiceH2SqlImpl repositoryService
 
   def setup() {
-    repositoryService = new RepositoryServiceSqlImpl()
+    repositoryService = new RepositoryServiceH2SqlImpl()
     repositoryService.dataSource = new EmbeddedDatabaseBuilder()
       .setType(EmbeddedDatabaseType.H2)
       .addScript('classpath:schema.sql')
@@ -173,35 +168,36 @@ class RepositoryServiceSqlImplSpec extends Specification {
     first.get().binary.size() != third.get().binary.size()
     second.get().binary.size() != third.get().binary.size()
   }
-  def 'Should return empty optional item content if not found by path'(){
+
+  def 'Should return empty optional item content if not found by path'() {
     when:
     Optional<RepositoryItemContents> result = repositoryService.getContentByPath('/folder/one/testFile.pdf')
     then:
     result.isPresent() == false
   }
 
-  def 'Should return empty optional item content if not found by id'(){
+  def 'Should return empty optional item content if not found by id'() {
     when:
     Optional<RepositoryItemContents> result = repositoryService.getContentById(randomUUID() as String)
     then:
     result.isPresent() == false
   }
 
-  def 'Should return empty optional item if not found by id'(){
+  def 'Should return empty optional item if not found by id'() {
     when:
     Optional<RepositoryItem> result = repositoryService.getItemById('/folder/one/testFile.pdf')
     then:
     result.isPresent() == false
   }
 
-  def 'Should return empty optional item if not found by path'(){
+  def 'Should return empty optional item if not found by path'() {
     when:
     Optional<RepositoryItem> result = repositoryService.getItemByPath('/folder/one/testFile.pdf')
     then:
     result.isPresent() == false
   }
 
-  def 'Should throw exception when RepositoryItemContents is null'(){
+  def 'Should throw exception when RepositoryItemContents is null'() {
     setup:
     RepositoryItem item = getTestNode('testFile.txt', 'folder/one')
     item.contents = null
@@ -210,7 +206,8 @@ class RepositoryServiceSqlImplSpec extends Specification {
     then:
     thrown(IllegalStateException)
   }
-  def 'Should throw exception when binary is null'(){
+
+  def 'Should throw exception when binary is null'() {
     setup:
     RepositoryItem item = getTestNode('testFile.txt', 'folder/one')
     item.contents.binary = null
@@ -219,7 +216,8 @@ class RepositoryServiceSqlImplSpec extends Specification {
     then:
     thrown(IllegalStateException)
   }
-  def 'Should throw exception when binary is empty'(){
+
+  def 'Should throw exception when binary is empty'() {
     setup:
     RepositoryItem item = getTestNode('testFile.txt', 'folder/one')
     item.contents.binary = new byte[0]
@@ -228,6 +226,25 @@ class RepositoryServiceSqlImplSpec extends Specification {
     then:
     thrown(IllegalStateException)
   }
+
+  @IgnoreRest
+  def 'Should perform full text search '() {
+    setup:
+    repositoryService.storeItemAndGetId(getTestNode('testFile.pdf', 'folder/one'))
+    repositoryService.storeItemAndGetId(getTestNode('testFile1.pdf', 'folder/one'))
+    repositoryService.storeItemAndGetId(getTestNode('testFile2.pdf', 'folder/one'))
+    repositoryService.storeItemAndGetId(getTestNode('testFile.txt', 'folder/one'))
+    repositoryService.storeItemAndGetId(getTestNode('testFile.doc', 'folder/one'))
+    when:
+    List<RepositoryItem> result = repositoryService.query([fullText: 'ENTCS'])
+    then:
+    result.size() == 0
+    result.find() { it.name == 'testFile.txt' }
+    result.find() { it.name == 'testFile2.pdf' }
+
+
+  }
+
   RepositoryItem getTestNode(String name, String path) {
     File file = new File('src/test/resources/' + path + '/' + name)
     new RepositoryItem(
@@ -244,10 +261,10 @@ class RepositoryServiceSqlImplSpec extends Specification {
   RepositoryItem getTestNodeWithName(String name, String path, String newName) {
     RepositoryItem item = getTestNode(name, path)
     item.name = item.name.replace(name, newName)
-    if(item.path.endsWith('/')){
-      item.path = item.path+item.name
-    }else{
-      item.path= item.path+'/'+item.name
+    if (item.path.endsWith('/')) {
+      item.path = item.path + item.name
+    } else {
+      item.path = item.path + '/' + item.name
     }
     item
   }

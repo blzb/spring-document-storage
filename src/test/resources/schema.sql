@@ -1,13 +1,17 @@
-DROP TABLE IF EXISTS repository_document;
-CREATE TABLE repository_document (
-  id                 VARCHAR(255),
+CREATE ALIAS IF NOT EXISTS FT_INIT FOR "org.h2.fulltext.FullText.init";
+CALL FT_INIT();
+CALL FT_DROP_INDEX('PUBLIC', 'REPOSITORY_DOCUMENT');
+DROP TABLE IF EXISTS REPOSITORY_DOCUMENT;
+CREATE TABLE REPOSITORY_DOCUMENT (
+  id                 VARCHAR(255) NOT NULL,
   path               VARCHAR(2000),
   name               VARCHAR(255),
   last_modified_date DATE    DEFAULT CURRENT_TIMESTAMP(),
   created_at_date    DATE    DEFAULT CURRENT_TIMESTAMP(),
-  version            INTEGER DEFAULT 1,
+  version            INTEGER NOT NULL,
   mime_type          VARCHAR(255),
   tags               CLOB,
   binary             BLOB,
-  text_content       CLOB
-);
+  text_content       CLOB);
+ALTER TABLE REPOSITORY_DOCUMENT ADD PRIMARY KEY (ID, VERSION);
+CALL FT_CREATE_INDEX('PUBLIC', 'REPOSITORY_DOCUMENT', 'TEXT_CONTENT');
