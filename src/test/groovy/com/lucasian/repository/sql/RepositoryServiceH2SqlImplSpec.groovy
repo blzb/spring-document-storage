@@ -227,7 +227,6 @@ class RepositoryServiceH2SqlImplSpec extends Specification {
     thrown(IllegalStateException)
   }
 
-  @IgnoreRest
   def 'Should perform full text search '() {
     setup:
     repositoryService.storeItemAndGetId(getTestNode('testFile.pdf', 'folder/one'))
@@ -238,7 +237,7 @@ class RepositoryServiceH2SqlImplSpec extends Specification {
     when:
     List<RepositoryItem> result = repositoryService.query([fullText: 'ENTCS'])
     then:
-    result.size() == 0
+    result.size() == 2
     result.find() { it.name == 'testFile.txt' }
     result.find() { it.name == 'testFile2.pdf' }
 
