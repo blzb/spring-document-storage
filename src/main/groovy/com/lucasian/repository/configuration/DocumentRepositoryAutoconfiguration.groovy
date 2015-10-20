@@ -1,0 +1,40 @@
+package com.lucasian.repository.configuration
+
+import com.lucasian.repository.RepositoryService
+import com.lucasian.repository.sql.RepositoryServiceH2SqlImpl
+import org.apache.tika.Tika
+import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
+import org.springframework.context.annotation.Bean
+import org.springframework.context.annotation.Conditional
+import org.springframework.context.annotation.Configuration
+
+import javax.sql.DataSource
+
+
+/**
+ * Created by blzb on 10/18/15.
+ */
+@Configuration
+class DocumentRepositoryAutoConfiguration {
+  @Configuration
+  @ConditionalOnProperty(prefix = 'lucasian.repository', name = 'implementation', havingValue = 'H2')
+  protected static class H2RepositoryConfiguration {
+
+    @Autowired
+    private DataSource dataSource
+
+    @Bean
+    Tika tika(){
+      new Tika()
+    }
+    @Bean
+    RepositoryService H2RespositoryService() {
+      new RepositoryServiceH2SqlImpl(
+        tika: tika(),
+        dataSource: dataSource
+      )
+    }
+  }
+}
