@@ -5,6 +5,7 @@ import com.lucasian.repository.sql.RepositoryServiceH2SqlImpl
 import org.apache.tika.Tika
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean
+import org.springframework.boot.autoconfigure.condition.ConditionalOnClass
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Conditional
@@ -19,7 +20,7 @@ import javax.sql.DataSource
 @Configuration
 class DocumentRepositoryAutoConfiguration {
   @Configuration
-  @ConditionalOnProperty(prefix = 'lucasian.repository', name = 'implementation', havingValue = 'H2')
+  @ConditionalOnClass(name = 'org.h2.Driver')
   protected static class H2RepositoryConfiguration {
 
     @Autowired
