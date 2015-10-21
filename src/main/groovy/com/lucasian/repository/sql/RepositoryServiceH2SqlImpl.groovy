@@ -58,7 +58,7 @@ class RepositoryServiceH2SqlImpl implements RepositoryService {
     Map properties = item.properties
     properties.binary = item.contents.binary
     properties.textContent = extractPlainText(item)
-    properties.tags = item.tags.toString().replace('[','').replace(']','')
+    properties.tags = item.tags.join(',')
     sql.execute('''insert into repository_document(
                 id,
                 path,
