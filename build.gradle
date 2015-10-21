@@ -58,7 +58,7 @@ dependencies {
 
 // We use the awesome Spock testing and specification framework
   testCompile 'org.spockframework:spock-core:1.0-groovy-2.4'
-  compile 'com.h2database:h2:1.4.190'
+  testCompile 'com.h2database:h2:1.4.190'
 
 }
 
@@ -101,9 +101,6 @@ publishing {
   publications {
     mavenJava(MavenPublication) {
       from components.java
-
-      it.pom.getRuntimeDependencies().clear()
-
       artifact sourcesJar
 
       pom.withXml {
