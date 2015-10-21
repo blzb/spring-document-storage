@@ -139,7 +139,7 @@ bintray {
   publish = true //If version should be auto published after an upload
   pkg {
     repo = 'oss'
-    userOrg = 'lucasian'
+    userOrg = 'blzb'
     name = project.name
     desc = project.description
     websiteUrl = 'https://github.com/blzb/spring-document-storage'
