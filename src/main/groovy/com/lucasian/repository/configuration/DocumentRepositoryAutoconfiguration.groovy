@@ -3,6 +3,7 @@ package com.lucasian.repository.configuration
 import com.lucasian.repository.RepositoryService
 import com.lucasian.repository.sql.RepositoryServiceH2SqlImpl
 import com.lucasian.repository.taglib.RepositoryDialect
+import com.lucasian.repository.taglib.RepositoryProcessor
 import org.apache.tika.Tika
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean
@@ -12,6 +13,7 @@ import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Conditional
 import org.springframework.context.annotation.Configuration
 import org.thymeleaf.dialect.IDialect
+import org.thymeleaf.processor.IProcessor
 
 import javax.sql.DataSource
 
@@ -45,8 +47,12 @@ class DocumentRepositoryAutoConfiguration {
   @Configuration
   protected static class RepositoryTagLibConfiguration {
     @Bean
+    RepositoryProcessor repositoryProcessor(){
+      new RepositoryProcessor()
+    }
+    @Bean
     IDialect RepositoryDialect() {
-      new RepositoryDialect()
+      new RepositoryDialect([repositoryProcessor()].toSet())
     }
   }
 }

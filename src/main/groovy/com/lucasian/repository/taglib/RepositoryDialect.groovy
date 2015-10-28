@@ -7,8 +7,16 @@ import org.thymeleaf.processor.IProcessor
  * Created by blzb on 10/26/15.
  */
 class RepositoryDialect extends AbstractDialect {
+
+  private final Set<IProcessor> processors = new HashSet<IProcessor>()
+
   public RepositoryDialect() {
-    super();
+    super()
+  }
+
+  public RepositoryDialect(Set<IProcessor> processors){
+    super()
+    this.processors = processors
   }
 
   //
@@ -16,7 +24,7 @@ class RepositoryDialect extends AbstractDialect {
   // will start with 'hello:'
   //
   public String getPrefix() {
-    return "repo";
+     'repo'
   }
 
 
@@ -25,9 +33,7 @@ class RepositoryDialect extends AbstractDialect {
   //
   @Override
   public Set<IProcessor> getProcessors() {
-    final Set<IProcessor> processors = new HashSet<IProcessor>();
-    processors.add(new RepositoryProcessor());
-    return processors;
+     processors
   }
 
 }
