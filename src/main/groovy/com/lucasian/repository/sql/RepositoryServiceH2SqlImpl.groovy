@@ -38,6 +38,9 @@ class RepositoryServiceH2SqlImpl implements RepositoryService {
       throw new IllegalStateException('empty file')
     }
     if (!item.path.contains(item.name)) {
+      if (!item.path.startsWith('/')) {
+        item.path = '/' + item.path
+      }
       if (!item.path.endsWith('/')) {
         item.path += '/'
       }
@@ -92,6 +95,22 @@ class RepositoryServiceH2SqlImpl implements RepositoryService {
   }
 
   @Override
+  List<RepositoryItem> listFoldersInPath(String path) {
+    Sql sql = new Sql(dataSource)
+    String query = buildQuery(REPOSITORY_ITEMS_FIELDS, "path like '${path}%'")
+    sql.rows(query).collect() {
+      String itemPath = it.path
+      File file = new File(itemPath.replace(path,''))
+      file.getParent()
+    }.toSet().collect(){
+      new RepositoryItem(
+        path: it,
+        mimeType: 'folder'
+      )
+    }
+  }
+
+  @Override
   Optional<RepositoryItem> getItemByPath(String path) {
     String version = getMaxVersionByPath(path)['max_version']
     getItemByPath(path, version)
@@ -100,6 +119,9 @@ class RepositoryServiceH2SqlImpl implements RepositoryService {
   @Override
   Optional<RepositoryItem> getItemByPath(String path, String version) {
     Sql sql = new Sql(dataSource)
+    if (!path.startsWith('/')) {
+      path = '/' + path
+    }
     String query = buildQuery(REPOSITORY_ITEMS_FIELDS, 'path = :path and version = :version')
     getItem(sql.firstRow(query, [path: path, version: version]))
   }
@@ -119,6 +141,9 @@ class RepositoryServiceH2SqlImpl implements RepositoryService {
 
   @Override
   Optional<RepositoryItemContents> getContentByPath(String path, String version) {
+    if (!path.startsWith('/')) {
+      path = '/' + path
+    }
     String query = buildQuery(REPOSITORY_ITEM_CONTENT_FIELDS, "path = '${path}' and version = ${version}")
     getContentsByQuery(query)
   }

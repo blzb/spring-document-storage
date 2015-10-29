@@ -57,8 +57,8 @@ class RepositoryProcessor extends AbstractUnescapedTextChildModifierAttrProcesso
       parser.parseExpression(configuration, arguments, attributeValue);
 
     final String path = (String) expression.execute(configuration, arguments);
-
     List<RepositoryItem> items = repositoryService.listItemsInPath(path)
+    println('Getting items for :'+items.collect(){it.properties})
     Context context = new Context()
     context.setVariable('items', items)
     context.setVariable('path', path)

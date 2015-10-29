@@ -78,7 +78,7 @@ class DocumentRepositoryAutoConfiguration {
     }
     @Bean
     RepositoryController repositoryController(){
-      new RepositoryController()
+      new RepositoryController(repositoryService: repositoryService)
     }
   }
 }

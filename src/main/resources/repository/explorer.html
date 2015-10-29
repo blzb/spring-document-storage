@@ -42,8 +42,8 @@
         <br/>
         <div class="row">
             <div class="col-lg-12">
-                <div class="file-box">
-                    <div th:each="item : ${item}" class="file">
+                <div th:each="item : ${items}"  class="file-box">
+                    <div class="file">
                         <a href="#">
                             <span class="corner"></span>
 
@@ -78,6 +78,7 @@
                     <form id="my-awesome-dropzone" class="dropzone" action="#">
                         <div class="dz-message" data-dz-message=""><strong>No has subido ningún documento</strong></div>
                         <div class="dropzone-previews"></div>
+                        <input type="hidden" value="Subscribe me!" th:value="${path}" name="path"/>
                         <button type="submit" class="btn btn-info pull-right">Guardar documentos!</button>
                     </form>
                 </div>

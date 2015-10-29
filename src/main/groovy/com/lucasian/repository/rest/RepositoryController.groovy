@@ -1,5 +1,8 @@
 package com.lucasian.repository.rest
 
+import com.lucasian.repository.RepositoryItem
+import com.lucasian.repository.RepositoryItemContents
+import com.lucasian.repository.RepositoryService
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.stereotype.Controller
@@ -12,14 +15,24 @@ import org.springframework.web.multipart.MultipartFile
  */
 @Controller
 class RepositoryController {
+  RepositoryService repositoryService
+
   @RequestMapping(
     value = "/repository/post",
     method = RequestMethod.POST
   )
-  public ResponseEntity uploadFile(MultipartFile file) {
-    println(file.name)
-    println(file.originalFilename)
-    println(file.size)
+  public ResponseEntity uploadFile(FileUploadForm form) {
+    RepositoryItem item = new RepositoryItem(
+      name: form.file.originalFilename,
+      path: form.path,
+      tags: [],
+      contents: new RepositoryItemContents(
+        binary: form.file.bytes,
+        metadata: [:]
+      )
+    )
+    String id = repositoryService.storeItemAndGetId(item)
+    println("File stored with id: ${id}")
     return new ResponseEntity("{}", HttpStatus.OK);
   }
 
