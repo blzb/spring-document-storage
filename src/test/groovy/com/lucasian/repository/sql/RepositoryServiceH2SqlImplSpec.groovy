@@ -56,7 +56,6 @@ class RepositoryServiceH2SqlImplSpec extends Specification {
     results != null
     results.size() == 4
   }
-
   def 'Should list folder in path'() {
     setup:
     repositoryService.storeItemAndGetId(getTestNode('testFile.txt', 'folder/one'))
@@ -64,10 +63,8 @@ class RepositoryServiceH2SqlImplSpec extends Specification {
     repositoryService.storeItemAndGetId(getTestNode('testFile.txt', 'folder/two'))
     repositoryService.storeItemAndGetId(getTestNode('testFile.jpg', 'folder/two'))
     when:
-    List<RepositoryItem> results1 = repositoryService.listFoldersInPath('')
-    println("RES1:"+results1.collect(){it.path})
+    List<RepositoryItem> results1 = repositoryService.listFoldersInPath('/')
     List<RepositoryItem> results2 = repositoryService.listFoldersInPath('/folder')
-    println("RES2:"+results2.collect(){it.path})
     then:
     results1 != null
     results2 != null
