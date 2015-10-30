@@ -122,7 +122,7 @@ class RepositoryServiceH2SqlImpl implements RepositoryService {
   @Override
   List<RepositoryItem> listItemsInPath(String path) {
     Sql sql = new Sql(dataSource)
-    String query = buildQuery(REPOSITORY_ITEMS_FIELDS, "path like '${path}%'")
+    String query = buildQuery(REPOSITORY_ITEMS_FIELDS, "path like '${path}%' and NOT mime_type = '${FOLDER_CONTENT}'")
     sql.rows(query).collect() {
       getItem(it).get()
     }
@@ -131,6 +131,9 @@ class RepositoryServiceH2SqlImpl implements RepositoryService {
   @Override
   List<RepositoryItem> listFoldersInPath(String path) {
     //TODO: improve implementation
+    if(!path.endsWith('/')){
+      path+='/'
+    }
     Sql sql = new Sql(dataSource)
     String query = buildQuery(REPOSITORY_ITEMS_FIELDS, "path like '${path}%'")
     sql.rows(query).collect() {
@@ -144,6 +147,7 @@ class RepositoryServiceH2SqlImpl implements RepositoryService {
     }.toSet().collect() {
       new RepositoryItem(
         name: it,
+        path: path+it,
         mimeType: 'folder'
       )
     }.findAll { !it.name.contains('.') }
@@ -161,7 +165,7 @@ class RepositoryServiceH2SqlImpl implements RepositoryService {
     if (!path.startsWith('/')) {
       path = '/' + path
     }
-    String query = buildQuery(REPOSITORY_ITEMS_FIELDS, 'path = :path and version = :version and mime_type != :folder')
+    String query = buildQuery(REPOSITORY_ITEMS_FIELDS, 'path = :path and version = :version ')
     getItem(sql.firstRow(query, [path: path, version: version, folder: FOLDER_CONTENT]))
   }
 
