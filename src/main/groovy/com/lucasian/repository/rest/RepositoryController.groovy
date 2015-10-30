@@ -33,7 +33,16 @@ class RepositoryController {
       )
     )
     String id = repositoryService.storeItemAndGetId(item)
-    return new ResponseEntity("{}", HttpStatus.OK);
+    return new ResponseEntity(id, HttpStatus.OK);
+  }
+
+  @RequestMapping(
+    value = "/repository/createFolder",
+    method = RequestMethod.POST
+  )
+  public ResponseEntity createFolder(String path, String name) {
+    String id = repositoryService.createFolder(path, name)
+    return new ResponseEntity(id, HttpStatus.OK);
   }
 
   @RequestMapping(

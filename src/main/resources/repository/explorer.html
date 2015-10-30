@@ -4,9 +4,16 @@
             <div class="ibox-content">
                 <div class="file-manager">
                     <div class="pull-right">
-                        <button rel="tooltip" data-toggle="tooltip" data-placement="top" data-original-title="Subir más archivos" onclick="subirArchivo()" class="btn btn-outline btn-primary dim" type="button"><i class="fa fa-cloud-upload"></i></button>
-                        <button rel="tooltip" data-toggle="tooltip" data-placement="top" data-original-title="Crear nueva carpeta" class="btn btn-outline btn-primary dim" type="button"><i class="fa fa-folder-open-o"></i></button>
-                        <button rel="tooltip" data-toggle="tooltip" data-placement="top" data-original-title="Mostrar eliminados" class="btn btn-outline btn-primary dim" type="button"><i class="fa fa-trash-o"></i></button>
+                        <button rel="tooltip" data-toggle="tooltip" data-placement="top"
+                                data-original-title="Subir más archivos" onclick="subirArchivo()"
+                                class="btn btn-outline btn-primary dim" type="button"><i class="fa fa-cloud-upload"></i>
+                        </button>
+                        <button rel="tooltip" data-toggle="tooltip" data-placement="top"
+                                data-original-title="Crear nueva carpeta" class="btn btn-outline btn-primary dim"
+                                type="button" onclick="openFolderModal()"><i class="fa fa-folder-open-o"></i></button>
+                        <button rel="tooltip" data-toggle="tooltip" data-placement="top"
+                                data-original-title="Mostrar eliminados" class="btn btn-outline btn-primary dim"
+                                type="button"><i class="fa fa-trash-o"></i></button>
                     </div>
                     <div class="clearfix"></div>
                     <div class="hr-line-dashed"></div>
@@ -42,9 +49,10 @@
             </div>
         </div>
         <br/>
+
         <div class="row">
             <div class="col-lg-12" id="fileItems">
-                <div th:each="item : ${items}"  class="file-box">
+                <div th:each="item : ${items}" class="file-box">
                     <div class="file">
                         <a href="#">
                             <span class="corner"></span>
@@ -70,9 +78,11 @@
     <div class="modal-dialog">
         <div class="modal-content animated flipInY">
             <div class="modal-header">
-                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span
+                        class="sr-only">Close</span></button>
                 <h4 class="modal-title">Agregar documentos</h4>
-                <small class="font-bold">Aquí puedes agregar documentos arrasttrándolos o dando click en el recuadro.</small>
+                <small class="font-bold">Aquí puedes agregar documentos arrasttrándolos o dando click en el recuadro.
+                </small>
             </div>
             <div class="modal-body">
 
@@ -88,6 +98,28 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-primary" data-dismiss="modal">Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal inmodal" id="folderModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content animated flipInY">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span
+                        class="sr-only">Close</span></button>
+                <h4 class="modal-title">Crear folder</h4>
+                <small class="font-bold">Captura el nombre de la carpeta.
+                </small>
+            </div>
+            <div class="modal-body">
+                <div>
+                    <input type="text" name="folderName" id="folderName"/>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" data-dismiss="modal" onclick="createFolder()">Cerrar
+                </button>
             </div>
         </div>
     </div>
@@ -132,10 +164,20 @@
         };
     });
 
-    function subirArchivo() {
-        jQuery("#dropModal").modal("toggle");
+    function openFolderModal() {
+        jQuery("#folderModal").modal("toggle");
     }
-    function loadFiles( pathValue){
+    function createFolder() {
+        var path = $('#path').val();
+        $.post('/repository/createFolder', {
+                    path: path,
+                    name: $('#folderName').val()
+                }
+        );
+        loadFolders(path);
+        jQuery("#folderModal").modal("toggle");
+    }
+    function loadFiles(pathValue) {
         $.get('/repository/items', {path: pathValue}, function (data, status) {
             $("#fileItems").html("");
             $.each(data, function (i, item) {
@@ -145,19 +187,17 @@
                         '</span><br/><small>' +
                         item.lastModifiedDate +
                         '</small></div></a></div></div>')
-                .appendTo('#fileItems');
+                        .appendTo('#fileItems');
             });
-            $("#ruta").html(pathValue)
         })
     }
-    function loadFolders( pathValue){
+    function loadFolders(pathValue) {
         $.get('/repository/folders', {path: pathValue}, function (data, status) {
             $("#folders").html("");
             $.each(data, function (i, item) {
-                $('<li ><a href="#"><i class="fa fa-folder"></i><span>'+item.name+'</span></a></li>')
+                $('<li ><a href="#"><i class="fa fa-folder"></i><span>' + item.name + '</span></a></li>')
                         .appendTo('#folders');
             });
-            $("#ruta").html(pathValue)
         })
     }
 

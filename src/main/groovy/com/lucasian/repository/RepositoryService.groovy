@@ -5,6 +5,7 @@ package com.lucasian.repository
  */
 interface RepositoryService{
     String storeItemAndGetId(RepositoryItem item)
+    String createFolder(String path, String name)
     List<RepositoryItem> listItemsInPath(String path)
     List<RepositoryItem> listFoldersInPath(String path)
     Optional<RepositoryItem> getItemByPath(String path)

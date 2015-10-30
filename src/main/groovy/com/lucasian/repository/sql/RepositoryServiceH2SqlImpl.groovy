@@ -31,21 +31,14 @@ class RepositoryServiceH2SqlImpl implements RepositoryService {
   final String REPOSITORY_ITEMS_FIELDS = 'id, path, name, last_modified_date, created_at_date, version, mime_type, tags'
   private static final String REPOSITORY_ITEM_CONTENT_FIELDS = 'binary'
   private static final String MAX_VERSION_FIELDS = 'max(version) as max_version, id'
+  private static final String FOLDER_CONTENT = 'folder'
 
   @Override
   String storeItemAndGetId(RepositoryItem item) {
     if (!item.contents || !item.contents.binary) {
       throw new IllegalStateException('empty file')
     }
-    if (!item.path.contains(item.name)) {
-      if (!item.path.startsWith('/')) {
-        item.path = '/' + item.path
-      }
-      if (!item.path.endsWith('/')) {
-        item.path += '/'
-      }
-      item.path += item.name
-    }
+    item.path = normalizePath(item.path, item.name)
     Map maxVersionResult = getMaxVersionByPath(item.path)
     Integer maxVersion = maxVersionResult['max_version'] as Integer
     if (maxVersion) {
@@ -62,7 +55,8 @@ class RepositoryServiceH2SqlImpl implements RepositoryService {
     properties.binary = item.contents.binary
     properties.textContent = extractPlainText(item)
     properties.tags = item.tags.join(',')
-    sql.execute('''insert into repository_document(
+    sql.execute('''
+    insert into repository_document(
                 id,
                 path,
                 name,
@@ -84,7 +78,47 @@ class RepositoryServiceH2SqlImpl implements RepositoryService {
                 ''', properties)
     item.id
   }
-
+  @Override
+  String createFolder(String path, String name) {
+    Sql sql = new Sql(dataSource)
+    String uuid = randomUUID()
+    path = normalizePath(path, name)
+    sql.execute('''
+    insert into repository_document(
+                id,
+                path,
+                name,
+                mime_type,
+                version
+                )values(
+                :id,
+                :path,
+                :name,
+                :mimeType,
+                :version
+                )
+                ''',
+      [
+        id      : uuid,
+        path    : path,
+        name    : name,
+        mimeType: FOLDER_CONTENT,
+        version: 1
+      ])
+    uuid
+  }
+  private String normalizePath(String path, String name){
+    if (!path.contains(name)) {
+      if (!path.startsWith('/')) {
+        path = '/' + path
+      }
+      if (!path.endsWith('/')) {
+        path += '/'
+      }
+      path += name
+    }
+    path
+  }
   @Override
   List<RepositoryItem> listItemsInPath(String path) {
     Sql sql = new Sql(dataSource)
@@ -96,9 +130,11 @@ class RepositoryServiceH2SqlImpl implements RepositoryService {
 
   @Override
   List<RepositoryItem> listFoldersInPath(String path) {
+    //TODO: improve implementation
     Sql sql = new Sql(dataSource)
     String query = buildQuery(REPOSITORY_ITEMS_FIELDS, "path like '${path}%'")
     sql.rows(query).collect() {
+      println('PROPERTIES:'+it)
       String itemPath = it.path
       itemPath = itemPath.replaceFirst(path, '')
       if (!itemPath.startsWith('/')) {
@@ -110,7 +146,7 @@ class RepositoryServiceH2SqlImpl implements RepositoryService {
         name: it,
         mimeType: 'folder'
       )
-    }
+    }.findAll { !it.name.contains('.') }
   }
 
   @Override
@@ -125,8 +161,8 @@ class RepositoryServiceH2SqlImpl implements RepositoryService {
     if (!path.startsWith('/')) {
       path = '/' + path
     }
-    String query = buildQuery(REPOSITORY_ITEMS_FIELDS, 'path = :path and version = :version')
-    getItem(sql.firstRow(query, [path: path, version: version]))
+    String query = buildQuery(REPOSITORY_ITEMS_FIELDS, 'path = :path and version = :version and mime_type != :folder')
+    getItem(sql.firstRow(query, [path: path, version: version, folder: FOLDER_CONTENT]))
   }
 
   @Override
@@ -241,7 +277,7 @@ class RepositoryServiceH2SqlImpl implements RepositoryService {
           version: version as String,
           mimeType: mime_type as String,
           id: id as String,
-          tags: tagList.split(',').toList(),
+          tags: tagList?.split(',')?.toList(),
           lastModifiedDate: last_modified_date as Date,
           createdAtDate: created_at_date as Date
         )
