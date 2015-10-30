@@ -10,8 +10,10 @@
                     </div>
                     <div class="clearfix"></div>
                     <div class="hr-line-dashed"></div>
-                    <ul class="folder-list" style="padding: 0">
-                        <li><a href="#"><i class="fa fa-folder"></i>Folder</a></li>
+                    <ul class="folder-list" style="padding: 0" id="folders">
+                        <li th:each="folder : ${folders}">
+                            <a href="#"><i class="fa fa-folder"></i><span th:text="${folder.name}"></span></a>
+                        </li>
                     </ul>
                     <h5 class="tag-title">Etiquetas</h5>
                     <ul class="tag-list" style="padding: 0">
@@ -31,7 +33,7 @@
                     </li>
                     <li class="active">
                                     <span class="text-success">
-                                        <strong th:text="${path}"></strong>
+                                        <strong th:text="${path}" id="ruta"></strong>
                                     </span>
                     </li>
                 </ol>
@@ -41,7 +43,7 @@
         </div>
         <br/>
         <div class="row">
-            <div class="col-lg-12">
+            <div class="col-lg-12" id="fileItems">
                 <div th:each="item : ${items}"  class="file-box">
                     <div class="file">
                         <a href="#">
@@ -78,7 +80,7 @@
                     <form id="my-awesome-dropzone" class="dropzone" action="#">
                         <div class="dz-message" data-dz-message=""><strong>No has subido ningún documento</strong></div>
                         <div class="dropzone-previews"></div>
-                        <input type="hidden" value="Subscribe me!" th:value="${path}" name="path"/>
+                        <input type="hidden" value="Subscribe me!" th:value="${path}" name="path" id="path"/>
                         <button type="submit" class="btn btn-info pull-right">Guardar documentos!</button>
                     </form>
                 </div>
@@ -96,6 +98,7 @@
     function subirArchivo() {
         jQuery("#dropModal").modal("toggle");
     }
+
     //Dropzone Config
     jQuery(document).ready(function () {
         Dropzone.options.myAwesomeDropzone = {
@@ -104,7 +107,7 @@
             parallelUploads: 100,
             maxFiles: 100,
             paramName: 'file',
-            url: "/repository/post",
+            url: "/repository/upload",
             // Dropzone settings
             init: function () {
                 var myDropzone = this;
@@ -119,6 +122,12 @@
                 });
                 this.on("errormultiple", function (files, response) {
                 });
+                this.on("queuecomplete", function (file) {
+                    var ruta = $('#path').val();
+                    loadFiles(ruta);
+                    loadFolders(ruta);
+                    myDropzone.removeAllFiles();
+                });
             }
         };
     });
@@ -126,4 +135,30 @@
     function subirArchivo() {
         jQuery("#dropModal").modal("toggle");
     }
+    function loadFiles( pathValue){
+        $.get('/repository/items', {path: pathValue}, function (data, status) {
+            $("#fileItems").html("");
+            $.each(data, function (i, item) {
+                $('<div class="file-box"><div class="file"><a href="#"><span class="corner"></span><div class="icon"><i class="fa fa-file"></i></div><div class="file-name">' +
+                        '<span>' +
+                        item.name +
+                        '</span><br/><small>' +
+                        item.lastModifiedDate +
+                        '</small></div></a></div></div>')
+                .appendTo('#fileItems');
+            });
+            $("#ruta").html(pathValue)
+        })
+    }
+    function loadFolders( pathValue){
+        $.get('/repository/folders', {path: pathValue}, function (data, status) {
+            $("#folders").html("");
+            $.each(data, function (i, item) {
+                $('<li ><a href="#"><i class="fa fa-folder"></i><span>'+item.name+'</span></a></li>')
+                        .appendTo('#folders');
+            });
+            $("#ruta").html(pathValue)
+        })
+    }
+
 </script>

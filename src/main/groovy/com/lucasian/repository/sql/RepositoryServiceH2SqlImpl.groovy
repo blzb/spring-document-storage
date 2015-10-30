@@ -107,7 +107,7 @@ class RepositoryServiceH2SqlImpl implements RepositoryService {
       itemPath.split('/')[1]
     }.toSet().collect() {
       new RepositoryItem(
-        path: it,
+        name: it,
         mimeType: 'folder'
       )
     }

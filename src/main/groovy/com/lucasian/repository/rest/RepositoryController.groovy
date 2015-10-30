@@ -8,6 +8,7 @@ import org.springframework.http.ResponseEntity
 import org.springframework.stereotype.Controller
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestMethod
+import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.multipart.MultipartFile
 
 /**
@@ -18,7 +19,7 @@ class RepositoryController {
   RepositoryService repositoryService
 
   @RequestMapping(
-    value = "/repository/post",
+    value = "/repository/upload",
     method = RequestMethod.POST
   )
   public ResponseEntity uploadFile(FileUploadForm form) {
@@ -32,8 +33,36 @@ class RepositoryController {
       )
     )
     String id = repositoryService.storeItemAndGetId(item)
-    println("File stored with id: ${id}")
     return new ResponseEntity("{}", HttpStatus.OK);
   }
 
+  @RequestMapping(
+    value = "/repository/items",
+    method = RequestMethod.GET
+  )
+  public ResponseEntity<List<RepositoryItem>> items(@RequestParam("path") String path) {
+    return new ResponseEntity(repositoryService.listItemsInPath(path), HttpStatus.OK);
+  }
+
+  @RequestMapping(
+    value = "/repository/folders",
+    method = RequestMethod.GET
+  )
+  public ResponseEntity<List<RepositoryItem>> folders(@RequestParam("path") String path) {
+    return new ResponseEntity(repositoryService.listFoldersInPath(path), HttpStatus.OK);
+  }
+
+  @RequestMapping(
+    value = "/repository/item",
+    method = RequestMethod.GET
+  )
+  public ResponseEntity<RepositoryItem> item(@RequestParam("path") String path) {
+    Optional<RepositoryItem> item = repositoryService.getItemByPath(path)
+    if (item.isPresent()) {
+      return new ResponseEntity(item.get(), HttpStatus.OK);
+    } else {
+      return new ResponseEntity('{}', HttpStatus.NOT_FOUND);
+    }
+
+  }
 }

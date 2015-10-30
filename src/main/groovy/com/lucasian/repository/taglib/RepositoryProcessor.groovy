@@ -62,6 +62,7 @@ class RepositoryProcessor extends AbstractUnescapedTextChildModifierAttrProcesso
     Context context = new Context()
     context.setVariable('items', items)
     context.setVariable('path', path)
+    context.setVariable('folders', repositoryService.listFoldersInPath(path))
     return templateEngine.process(templateName, context)
   }
 }
