@@ -31,15 +31,7 @@
     <div class="col-lg-9 animated fadeInRight">
         <div class="row wrapper white-bg">
             <div class="col-lg-10">
-                <ol class="breadcrumb">
-                    <li>
-                        <i class="fa fa-folder-open"></i>
-                    </li>
-                    <li class="active">
-                                    <span class="text-success">
-                                        <strong th:text="${path}" id="ruta"></strong>
-                                    </span>
-                    </li>
+                <ol class="breadcrumb" id="ruta">
                 </ol>
             </div>
             <div class="col-lg-2">
@@ -143,14 +135,13 @@
                 });
             }
         };
-        loadFiles($('#path').val());
-        loadFolders($('#path').val());
+        changeFolder($('#path').val());
     });
     function changeFolder(path) {
         loadFolders(path);
         loadFiles(path);
         $('#path').val(path);
-        $('#ruta').html(path);
+        printPath(path);
     }
     function openFolderModal() {
         jQuery("#folderModal").modal("toggle");
@@ -192,6 +183,19 @@
                         .appendTo('#folders');
             });
         })
+    }
+    function printPath(pathValue) {
+        var acumulatedPath = '';
+        var pathHtml = '<li><a href="" onclick="changeFolder(\'/\'); return false;"><i class="fa fa-folder-open"></i></a></li>';
+        $(pathValue.split('/')).each(
+                function (i, el) {
+                    if (el) {
+                        acumulatedPath = acumulatedPath + '/' + el;
+                        pathHtml += '<li><a href="" onclick="changeFolder(\''+acumulatedPath+'\'); return false;"><span class="text-success"><strong>' + el + '</strong></span></a></li>'
+                    }
+                }
+        );
+        $('#ruta').html(pathHtml);
     }
 
 </script>
