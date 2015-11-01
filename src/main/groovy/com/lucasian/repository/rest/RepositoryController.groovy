@@ -6,6 +6,7 @@ import com.lucasian.repository.RepositoryService
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.stereotype.Controller
+import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestMethod
 import org.springframework.web.bind.annotation.RequestParam
@@ -66,12 +67,29 @@ class RepositoryController {
     method = RequestMethod.GET
   )
   public ResponseEntity<RepositoryItem> item(@RequestParam("path") String path) {
-    Optional<RepositoryItem> item = repositoryService.getItemByPath(path)
+    getItem(repositoryService.getItemByPath(path))
+  }
+  @RequestMapping(
+    value = "/repository/item/{id}",
+    method = RequestMethod.GET
+  )
+  public ResponseEntity<RepositoryItem> itemById(@PathVariable("id") String id) {
+    getItem(repositoryService.getItemById(id))
+  }
+  @RequestMapping(
+    value = "/repository/item/{id}",
+    method = RequestMethod.DELETE
+  )
+  public ResponseEntity<RepositoryItem> deleteItemById(@PathVariable("id") String id) {
+    repositoryService.deleteLatestVersion(id)
+    return new ResponseEntity('{}', HttpStatus.OK);
+  }
+
+  ResponseEntity getItem(Optional<RepositoryItem> item){
     if (item.isPresent()) {
       return new ResponseEntity(item.get(), HttpStatus.OK);
     } else {
       return new ResponseEntity('{}', HttpStatus.NOT_FOUND);
     }
-
   }
 }

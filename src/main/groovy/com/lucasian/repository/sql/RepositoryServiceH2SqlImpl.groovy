@@ -80,10 +80,11 @@ class RepositoryServiceH2SqlImpl implements RepositoryService {
   }
   @Override
   String createFolder(String path, String name) {
-    Sql sql = new Sql(dataSource)
-    String uuid = randomUUID()
-    path = normalizePath(path, name)
-    sql.execute('''
+    if(path && name) {
+      Sql sql = new Sql(dataSource)
+      String uuid = randomUUID()
+      path = normalizePath(path, name)
+      sql.execute('''
     insert into repository_document(
                 id,
                 path,
@@ -98,14 +99,17 @@ class RepositoryServiceH2SqlImpl implements RepositoryService {
                 :version
                 )
                 ''',
-      [
-        id      : uuid,
-        path    : path,
-        name    : name,
-        mimeType: FOLDER_CONTENT,
-        version: 1
-      ])
-    uuid
+        [
+          id      : uuid,
+          path    : path,
+          name    : name,
+          mimeType: FOLDER_CONTENT,
+          version : 1
+        ])
+      uuid
+    }else{
+      'Not created'
+    }
   }
   private String normalizePath(String path, String name){
     if (!path.contains(name)) {
@@ -119,6 +123,23 @@ class RepositoryServiceH2SqlImpl implements RepositoryService {
     }
     path
   }
+
+  @Override
+  void deleteAllVersionOfItem(String id) {
+    throw new UnsupportedOperationException()
+  }
+
+  @Override
+  void deleteItemByIdAndVersion(String id, String version) {
+    throw new UnsupportedOperationException()
+  }
+
+  @Override
+  void deleteLatestVersion(String id) {
+    Sql sql = new Sql(dataSource)
+    sql.execute('Delete from repository_document where id = :id', [id: id])
+  }
+
   @Override
   List<RepositoryItem> listItemsInPath(String path) {
     Sql sql = new Sql(dataSource)
