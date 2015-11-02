@@ -167,7 +167,6 @@ class RepositoryServiceH2SqlImpl implements RepositoryService {
     Sql sql = new Sql(dataSource)
     String query = buildQuery(REPOSITORY_ITEMS_FIELDS, "path like '${path}%'")
     sql.rows(query).collect() {
-      println('PROPERTIES:' + it)
       String itemPath = it.path
       itemPath = itemPath.replaceFirst(path, '')
       if (!itemPath.startsWith('/')) {
