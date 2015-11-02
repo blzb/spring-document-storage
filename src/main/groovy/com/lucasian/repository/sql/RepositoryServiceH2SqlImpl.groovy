@@ -78,9 +78,10 @@ class RepositoryServiceH2SqlImpl implements RepositoryService {
                 ''', properties)
     item.id
   }
+
   @Override
   String createFolder(String path, String name) {
-    if(path && name) {
+    if (path && name) {
       Sql sql = new Sql(dataSource)
       String uuid = randomUUID()
       path = normalizePath(path, name)
@@ -107,11 +108,12 @@ class RepositoryServiceH2SqlImpl implements RepositoryService {
           version : 1
         ])
       uuid
-    }else{
+    } else {
       'Not created'
     }
   }
-  private String normalizePath(String path, String name){
+
+  private String normalizePath(String path, String name) {
     if (!path.contains(name)) {
       if (!path.startsWith('/')) {
         path = '/' + path
@@ -141,6 +143,13 @@ class RepositoryServiceH2SqlImpl implements RepositoryService {
   }
 
   @Override
+  void addTags(String id, List<String> tags) {
+    Sql sql = new Sql(dataSource)
+    String tagString = tags.join(',')
+    sql.execute('UPDATE repository_document set tags = :tags where id = :id', [tags: tagString, id: id])
+  }
+
+  @Override
   List<RepositoryItem> listItemsInPath(String path) {
     Sql sql = new Sql(dataSource)
     String query = buildQuery(REPOSITORY_ITEMS_FIELDS, "path like '${path}%' and NOT mime_type = '${FOLDER_CONTENT}'")
@@ -152,13 +161,13 @@ class RepositoryServiceH2SqlImpl implements RepositoryService {
   @Override
   List<RepositoryItem> listFoldersInPath(String path) {
     //TODO: improve implementation
-    if(!path.endsWith('/')){
-      path+='/'
+    if (!path.endsWith('/')) {
+      path += '/'
     }
     Sql sql = new Sql(dataSource)
     String query = buildQuery(REPOSITORY_ITEMS_FIELDS, "path like '${path}%'")
     sql.rows(query).collect() {
-      println('PROPERTIES:'+it)
+      println('PROPERTIES:' + it)
       String itemPath = it.path
       itemPath = itemPath.replaceFirst(path, '')
       if (!itemPath.startsWith('/')) {
@@ -168,7 +177,7 @@ class RepositoryServiceH2SqlImpl implements RepositoryService {
     }.toSet().collect() {
       new RepositoryItem(
         name: it,
-        path: path+it,
+        path: path + it,
         mimeType: 'folder'
       )
     }.findAll { !it.name.contains('.') }

@@ -3,17 +3,22 @@
         <div class="ibox float-e-margins">
             <div class="ibox-content">
                 <div class="file-manager">
-                    <div class="pull-right">
-                        <button rel="tooltip" data-toggle="tooltip" data-placement="top"
-                                data-original-title="Subir más archivos" onclick="subirArchivo()"
-                                class="btn btn-outline btn-primary dim" type="button"><i class="fa fa-cloud-upload"></i>
+                    <div class="input-group">
+                        <input type="text" class="form-control" id="full_text"/> <span class="input-group-btn"> <button
+                            type="button" class="btn btn-primary" onclick="fullTextSearch();">Buscar
+                    </button> </span>
+                    </div>
+
+                    <div class="hr-line-dashed"></div>
+                    <div>
+                        <button rel="tooltip" onclick="subirArchivo()"
+                                class="col-sm-offset-2 col-lg-offset-0 col-sm-4 col-xs-12 col-lg-12 btn btn-outline btn-primary dim"
+                                type="button"><i class="fa fa-cloud-upload"></i> Subir Archivos
                         </button>
-                        <button rel="tooltip" data-toggle="tooltip" data-placement="top"
-                                data-original-title="Crear nueva carpeta" class="btn btn-outline btn-primary dim"
-                                type="button" onclick="openFolderModal()"><i class="fa fa-folder-open-o"></i></button>
-                        <button rel="tooltip" data-toggle="tooltip" data-placement="top"
-                                data-original-title="Mostrar eliminados" class="btn btn-outline btn-primary dim"
-                                type="button"><i class="fa fa-trash-o"></i></button>
+                        <button rel="tooltip" class=" col-sm-4 col-xs-12 col-lg-12 btn btn-outline btn-primary dim"
+                                type="button" onclick="openFolderModal();"><i class="fa fa-folder-open-o"></i>Crear
+                            Carpeta
+                        </button>
                     </div>
                     <div class="clearfix"></div>
                     <div class="hr-line-dashed"></div>
@@ -53,23 +58,22 @@
                 <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span
                         class="sr-only">Close</span></button>
                 <h4 class="modal-title">Agregar documentos</h4>
-                <small class="font-bold">Aquí puedes agregar documentos arrasttrándolos o dando click en el recuadro.
+                <small class="font-bold">Aquí puedes agregar documentos arrastrándolos o dando click en el recuadro.
                 </small>
             </div>
             <div class="modal-body">
-
                 <div>
                     <form id="my-awesome-dropzone" class="dropzone" action="#">
                         <div class="dz-message" data-dz-message=""><strong>No has subido ningún documento</strong></div>
                         <div class="dropzone-previews"></div>
                         <input type="hidden" value="Subscribe me!" th:value="${path}" name="path" id="path"/>
-                        <button type="submit" class="btn btn-info pull-right">Guardar documentos!</button>
                     </form>
                 </div>
 
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-primary" data-dismiss="modal">Crear</button>
+                <button id="sendFiles" type="submit" class="btn btn-primary">Guardar documentos</button>
+                <button type="button" class="btn btn-danger" data-dismiss="modal">Cerrar</button>
             </div>
         </div>
     </div>
@@ -131,9 +135,12 @@
                         <dl>
                             <dt>Id:</dt>
                             <dd id="file_id"></dd>
-                            <dt>Tags:</dt>
-                            <dd id="file_tags"></dd>
                         </dl>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-log-12">
+                        Etiquetas: <input type="text" id="file_tags"/>
                     </div>
                 </div>
                 <hr/>
@@ -154,8 +161,10 @@
                 </div>
             </div>
             <div class="modal-footer">
+
+                <button type="button" class="btn btn-primary" onclick="updateCurrentTags();">Actualizar Tags</button>
                 <button type="button" class="btn btn-primary" onclick="deleteCurrentDocument();">Borrar</button>
-                <button type="button" class="btn btn-primary" data-dismiss="modal">Cerrar</button>
+                <button type="button" class="btn btn-danger" data-dismiss="modal">Cerrar</button>
             </div>
         </div>
     </div>
@@ -179,11 +188,13 @@
             // Dropzone settings
             init: function () {
                 var myDropzone = this;
-                this.element.querySelector("button[type=submit]").addEventListener("click", function (e) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    myDropzone.processQueue();
-                });
+                $("#sendFiles").click(
+                        function (e) {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            myDropzone.processQueue();
+                        }
+                );
                 this.on("sendingmultiple", function () {
                 });
                 this.on("successmultiple", function (files, response) {
@@ -191,16 +202,22 @@
                 this.on("errormultiple", function (files, response) {
                 });
                 this.on("queuecomplete", function (file) {
+
                     var ruta = $('#path').val();
                     loadFiles(ruta);
                     loadFolders(ruta);
                     myDropzone.removeAllFiles();
+                    jQuery("#dropModal").modal("hide");
                 });
             }
         };
-        refreshAll()
+        refreshAll();
+        $('#file_tags').tagsInput({
+            'width': '100%',
+            'defaultText':'agregar..',
+        });
     });
-    function refreshAll(){
+    function refreshAll() {
         changeFolder($('#path').val());
     }
     function changeFolder(path) {
@@ -228,16 +245,19 @@
     function loadFiles(pathValue) {
         $("#fileItems").html("");
         $.get('/repository/items', {path: pathValue}, function (data, status) {
-            $.each(data, function (i, item) {
-                $('<div class="file-box"><div class="file"><a href="" onclick="detailDocumentoWithId(\'' + item.id + '\');return false;"><span class="corner"></span><div class="icon"><i class="fa fa-file"></i></div><div class="file-name">' +
-                        '<span>' +
-                        item.name +
-                        '</span><br/><small>' +
-                        item.lastModifiedDate +
-                        '</small></div></a></div></div>')
-                        .appendTo('#fileItems');
-            });
+            showFiles(data);
         })
+    }
+    function showFiles(data) {
+        $.each(data, function (i, item) {
+            $('<div class="file-box"><div class="file"><a href="" onclick="detailDocumentoWithId(\'' + item.id + '\');return false;"><span class="corner"></span><div class="icon"><i class="fa fa-file"></i></div><div class="file-name">' +
+                    '<span>' +
+                    item.name +
+                    '</span><br/><small>' +
+                    item.lastModifiedDate +
+                    '</small></div></a></div></div>')
+                    .appendTo('#fileItems');
+        });
     }
     function loadFolders(pathValue) {
         $("#folders").html("");
@@ -274,21 +294,50 @@
             $("#file_creation").html(data.createdAtDate);
             $("#file_modification").html(data.lastModifiedDate);
             $("#file_type").html(data.mimeType);
-            $("#file_tags").html(data.tags);
+            var tags = data.tags.join(',')
+            if (!!tags) {
+                $("#file_tags").importTags(tags);
+            } else {
+                $('#file_tags').importTags('');
+            }
             jQuery("#fileModal").modal("show");
         })
     }
-    function deleteCurrentDocument(){
+    function deleteCurrentDocument() {
         deleteDocumentWithId($('#file_id').html());
     }
-    function deleteDocumentWithId(id){
+    function deleteDocumentWithId(id) {
         $.ajax({
             url: '/repository/item/' + id,
             type: 'DELETE',
-            success: function(result) {
+            success: function (result) {
                 refreshAll();
                 jQuery("#fileModal").modal("hide");
             }
         });
+    }
+    function fullTextSearch() {
+        $("#fileItems").html("");
+        $.post('/repository/fullText', {
+                    text: $('#full_text').val()
+                }, function (data) {
+                    showFiles(data);
+                }
+        );
+    }
+    function updateCurrentTags() {
+        updateTags($('#file_id').html(), $("#file_tags").val())
+    }
+    function updateTags(id, tags) {
+        if (id) {
+            if (tags) {
+                $.post('/repository/item/' + id + '/tags', {
+                            tags: tags
+                        }, function (data) {
+                            jQuery("#fileModal").modal("hide");
+                        }
+                );
+            }
+        }
     }
 </script>

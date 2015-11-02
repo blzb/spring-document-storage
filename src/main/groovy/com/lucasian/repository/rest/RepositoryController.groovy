@@ -69,6 +69,7 @@ class RepositoryController {
   public ResponseEntity<RepositoryItem> item(@RequestParam("path") String path) {
     getItem(repositoryService.getItemByPath(path))
   }
+
   @RequestMapping(
     value = "/repository/item/{id}",
     method = RequestMethod.GET
@@ -76,6 +77,7 @@ class RepositoryController {
   public ResponseEntity<RepositoryItem> itemById(@PathVariable("id") String id) {
     getItem(repositoryService.getItemById(id))
   }
+
   @RequestMapping(
     value = "/repository/item/{id}",
     method = RequestMethod.DELETE
@@ -85,7 +87,29 @@ class RepositoryController {
     return new ResponseEntity('{}', HttpStatus.OK);
   }
 
-  ResponseEntity getItem(Optional<RepositoryItem> item){
+  @RequestMapping(
+    value = "/repository/fullText",
+    method = RequestMethod.POST
+  )
+  public ResponseEntity fullText(String text) {
+    return new ResponseEntity(repositoryService.query([fullText: text]), HttpStatus.OK);
+  }
+
+  @RequestMapping(
+    value = "/repository/item/{id}/tags",
+    method = RequestMethod.POST
+  )
+  public ResponseEntity postTags(@PathVariable("id") String id, String tags) {
+    if (tags) {
+      println('TAGS::' + tags)
+      List<String> tagList = tags.split(',').toList()
+      println('TAGLIST::' + tagList)
+      return new ResponseEntity(repositoryService.addTags(id, tagList), HttpStatus.OK);
+    }
+    return new ResponseEntity('{}', HttpStatus.BAD_REQUEST)
+  }
+
+  ResponseEntity getItem(Optional<RepositoryItem> item) {
     if (item.isPresent()) {
       return new ResponseEntity(item.get(), HttpStatus.OK);
     } else {

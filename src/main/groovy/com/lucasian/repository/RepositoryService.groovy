@@ -8,6 +8,7 @@ interface RepositoryService{
     String createFolder(String path, String name)
     void deleteAllVersionOfItem(String id)
     void deleteItemByIdAndVersion(String id, String version)
+    void addTags(String id, List<String> tags)
     void deleteLatestVersion(String id)
     List<RepositoryItem> listItemsInPath(String path)
     List<RepositoryItem> listFoldersInPath(String path)
