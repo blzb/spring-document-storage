@@ -16,6 +16,8 @@ interface RepositoryService{
     Optional<RepositoryItem> getItemByPath(String path, String version)
     Optional<RepositoryItem> getItemById(String id)
     Optional<RepositoryItem> getItemById(String id, String version)
+    Optional<RepositoryItem> getItemAndContentsById(String id)
+    Optional<RepositoryItem> getItemAndContentsById(String id, String version)
     Optional<RepositoryItemContents> getContentByPath(String path)
     Optional<RepositoryItemContents> getContentByPath(String path, String version)
     Optional<RepositoryItemContents> getContentById(String id)

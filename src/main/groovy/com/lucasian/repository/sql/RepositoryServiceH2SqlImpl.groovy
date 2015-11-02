@@ -27,9 +27,9 @@ class RepositoryServiceH2SqlImpl implements RepositoryService {
 
   Tika tika
 
-  private static
-  final String REPOSITORY_ITEMS_FIELDS = 'id, path, name, last_modified_date, created_at_date, version, mime_type, tags'
-  private static final String REPOSITORY_ITEM_CONTENT_FIELDS = 'binary'
+  private static final String REPOSITORY_ITEMS_FIELDS = 'id, path, name, last_modified_date, created_at_date, version, mime_type, tags'
+  private static final String REPOSITORY_ITEMS_FIELDS_FULL = 'id, path, name, last_modified_date, created_at_date, version, mime_type, tags, binary'
+  private static final String REPOSITORY_ITEM_CONTENT_FIELDS = 'binary, mime_type'
   private static final String MAX_VERSION_FIELDS = 'max(version) as max_version, id'
   private static final String FOLDER_CONTENT = 'folder'
 
@@ -212,6 +212,19 @@ class RepositoryServiceH2SqlImpl implements RepositoryService {
   }
 
   @Override
+  Optional<RepositoryItem> getItemAndContentsById(String id) {
+    String version = getMaxVersionById(id)['max_version']
+    getItemAndContentsById(id, version)
+  }
+
+  @Override
+  Optional<RepositoryItem> getItemAndContentsById(String id, String version) {
+    Sql sql = new Sql(dataSource)
+    String query = buildQuery(REPOSITORY_ITEMS_FIELDS_FULL, "id = '${id}' and version = ${version}")
+    getItemAndContentsByQuery(query)
+  }
+
+  @Override
   Optional<RepositoryItemContents> getContentByPath(String path, String version) {
     if (!path.startsWith('/')) {
       path = '/' + path
@@ -278,8 +291,31 @@ class RepositoryServiceH2SqlImpl implements RepositoryService {
       { GroovyResultSet row ->
         contents = new RepositoryItemContents()
         contents.binary = row.getBytes('BINARY')
+        contents.mimeType = row.getString('MIME_TYPE')
       })
     Optional.ofNullable(contents)
+  }
+
+  private Optional<RepositoryItem> getItemAndContentsByQuery(String query) {
+    Sql sql = new Sql(dataSource)
+    RepositoryItem item
+    sql.eachRow(query, 1, 0,
+      { GroovyResultSet row ->
+        item = new RepositoryItem(
+          path: row.getString('path'),
+          name: row.getString('name'),
+          version: row.getString('version'),
+          mimeType: row.getString('mime_type'),
+          id: row.getString('id'),
+          tags: row.getString('tags')?.split(',').toList(),
+          lastModifiedDate: row.getDate('last_modified_date'),
+          createdAtDate: row.getDate('created_at_date'),
+          contents: new RepositoryItemContents(
+            binary: row.getBytes('BINARY')
+          )
+        )
+      })
+    Optional.ofNullable(item)
   }
 
   void addMimeType(RepositoryItem repositoryItem) {

@@ -3,7 +3,10 @@ package com.lucasian.repository.rest
 import com.lucasian.repository.RepositoryItem
 import com.lucasian.repository.RepositoryItemContents
 import com.lucasian.repository.RepositoryService
+import org.springframework.http.HttpEntity
+import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
+import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
 import org.springframework.stereotype.Controller
 import org.springframework.web.bind.annotation.PathVariable
@@ -11,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestMethod
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.multipart.MultipartFile
+
 
 /**
  * Created by blzb on 10/28/15.
@@ -109,6 +113,21 @@ class RepositoryController {
     return new ResponseEntity('{}', HttpStatus.BAD_REQUEST)
   }
 
+  @RequestMapping(value = "/repository/item/{id}/content", method = RequestMethod.GET)
+  public HttpEntity<byte[]> getFile(
+    @PathVariable("id") String id) throws IOException {
+    Optional<RepositoryItem> contents = repositoryService.getItemAndContentsById(id)
+    if (contents.isPresent()) {
+      byte[] documentBody = contents.get().contents.binary
+      HttpHeaders header = new HttpHeaders();
+      header.setContentType(MediaType.parseMediaType(contents.get().mimeType));
+      header.set("Content-Disposition",
+        "attachment; filename=" + contents.get().name);
+      header.setContentLength(documentBody.length);
+      return new HttpEntity<byte[]>(documentBody, header);
+    }
+  }
+
   ResponseEntity getItem(Optional<RepositoryItem> item) {
     if (item.isPresent()) {
       return new ResponseEntity(item.get(), HttpStatus.OK);
@@ -116,4 +135,5 @@ class RepositoryController {
       return new ResponseEntity('{}', HttpStatus.NOT_FOUND);
     }
   }
+
 }

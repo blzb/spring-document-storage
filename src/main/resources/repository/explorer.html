@@ -107,34 +107,38 @@
             <div class="modal-header">
                 <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span
                         class="sr-only">Close</span></button>
-                <h4 class="modal-title" id="file_name">Archivo</h4>
+                <h4 class="modal-title" id="file_name" style="overflow: hidden; text-overflow: ellipsis">Archivo</h4>
                 <small class="font-bold">Detalles del archivo, usa esta pantalla para borrar.
                 </small>
             </div>
             <div class="modal-body">
                 <div class="row">
-                    <div class="col-lg-6">
-                        <dl>
-                            <dt>Version:</dt>
-                            <dd id="file_version"></dd>
-                            <dt>Ubicacion:</dt>
-                            <dd id="file_path"></dd>
-                        </dl>
-                    </div>
-                    <div class="col-lg-6">
-                        <dl>
-                            <dt>Creacion:</dt>
-                            <dd id="file_creation"></dd>
-                            <dt>Tipo:</dt>
-                            <dd id="file_type"></dd>
-                        </dl>
-                    </div>
-                </div>
-                <div class="row">
                     <div class="col-lg-12">
                         <dl>
                             <dt>Id:</dt>
                             <dd id="file_id"></dd>
+                            <dt>Ubicacion:</dt>
+                            <dd id="file_path"></dd>
+                        </dl>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-lg-4">
+                        <dl>
+                            <dt>Version:</dt>
+                            <dd id="file_version"></dd>
+                        </dl>
+                    </div>
+                    <div class="col-lg-4">
+                        <dl>
+                            <dt>Creacion:</dt>
+                            <dd id="file_creation"></dd>
+                        </dl>
+                    </div>
+                    <div class="col-lg-4">
+                        <dl>
+                            <dt>Tipo:</dt>
+                            <dd id="file_type"></dd>
                         </dl>
                     </div>
                 </div>
@@ -163,6 +167,7 @@
             <div class="modal-footer">
 
                 <button type="button" class="btn btn-primary" onclick="updateCurrentTags();">Actualizar Tags</button>
+                <a href="" class="btn btn-primary" id="downloadFile">Descargar</a>
                 <button type="button" class="btn btn-primary" onclick="deleteCurrentDocument();">Borrar</button>
                 <button type="button" class="btn btn-danger" data-dismiss="modal">Cerrar</button>
             </div>
@@ -250,7 +255,7 @@
     }
     function showFiles(data) {
         $.each(data, function (i, item) {
-            $('<div class="file-box"><div class="file"><a href="" onclick="detailDocumentoWithId(\'' + item.id + '\');return false;"><span class="corner"></span><div class="icon"><i class="fa fa-file"></i></div><div class="file-name">' +
+            $('<div class="file-box"><div class="file"><a href="" onclick="detailDocumentoWithId(\'' + item.id + '\');return false;"><span class="corner"></span><div class="icon"><i class="fa fa-file"></i></div><div class="file-name" style="overflow: hidden; text-overflow: ellipsis">' +
                     '<span>' +
                     item.name +
                     '</span><br/><small>' +
@@ -301,6 +306,7 @@
                 $('#file_tags').importTags('');
             }
             jQuery("#fileModal").modal("show");
+            $("#downloadFile").attr("href", "/repository/item/"+id+"/content");
         })
     }
     function deleteCurrentDocument() {
