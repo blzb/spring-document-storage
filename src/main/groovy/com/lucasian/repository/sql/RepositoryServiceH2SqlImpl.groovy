@@ -27,8 +27,8 @@ class RepositoryServiceH2SqlImpl implements RepositoryService {
 
   Tika tika
 
-  private static final String REPOSITORY_ITEMS_FIELDS = 'id, path, name, last_modified_date, created_at_date, version, mime_type, tags'
-  private static final String REPOSITORY_ITEMS_FIELDS_FULL = 'id, path, name, last_modified_date, created_at_date, version, mime_type, tags, binary'
+  private static final String REPOSITORY_ITEMS_FIELDS = 'repository_document.id, path, name, last_modified_date, created_at_date, repository_document.version, mime_type, tags'
+  private static final String REPOSITORY_ITEMS_FIELDS_FULL = 'repository_document.id, path, name, last_modified_date, created_at_date, repository_document.version, mime_type, tags, binary'
   private static final String REPOSITORY_ITEM_CONTENT_FIELDS = 'binary, mime_type'
   private static final String MAX_VERSION_FIELDS = 'max(version) as max_version, id'
   private static final String FOLDER_CONTENT = 'folder'
@@ -152,7 +152,7 @@ class RepositoryServiceH2SqlImpl implements RepositoryService {
   @Override
   List<RepositoryItem> listItemsInPath(String path) {
     Sql sql = new Sql(dataSource)
-    String query = buildQuery(REPOSITORY_ITEMS_FIELDS, "path like '${path}%' and NOT mime_type = '${FOLDER_CONTENT}'")
+    String query = buildLatestItemsQuery(REPOSITORY_ITEMS_FIELDS, "path like '${path}%' and NOT mime_type = '${FOLDER_CONTENT}'")
     sql.rows(query).collect() {
       getItem(it).get()
     }
@@ -359,5 +359,12 @@ class RepositoryServiceH2SqlImpl implements RepositoryService {
 
   private String buildQuery(String fields, String filters) {
     "Select ${fields} from repository_document where ${filters}"
+  }
+
+  private String buildLatestItemsQuery(String fields, String filters){
+    """Select ${fields} from repository_document inner join (
+      select id, max(version) as version from repository_document group by id)
+      maxed on (maxed.id = repository_document.id
+      and maxed.version = repository_document.version) where ${filters}"""
   }
 }
