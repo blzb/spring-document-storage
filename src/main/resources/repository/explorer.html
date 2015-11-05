@@ -181,11 +181,11 @@
         jQuery("#dropModal").modal("show");
     }
 
-    function getCurrentPath(){
+    function getCurrentPath() {
         return currentPath;
     }
-    function setCurrentPath(path){
-        var realPath = basePath+path
+    function setCurrentPath(path) {
+        var realPath = basePath + path
         $('#path').val(realPath);
         currentPath = path;
     }
@@ -226,11 +226,14 @@
             }
         };
         basePath = $('#path').val();
+        if(basePath=='/'){
+            basePath = '';
+        }
         currentPath = '/';//$('#path').val();
         refreshAll();
         $('#file_tags').tagsInput({
             'width': '100%',
-            'defaultText':'agregar..',
+            'defaultText': 'agregar..',
         });
     });
     function refreshAll() {
@@ -248,7 +251,7 @@
     function createFolder() {
         var path = getCurrentPath();
         $.post('/repository/createFolder', {
-                    path: basePath+path,
+                    path: basePath + path,
                     name: $('#folderName').val()
                 }, function (data) {
                     loadFolders(path);
@@ -260,7 +263,7 @@
     }
     function loadFiles(pathValue) {
         $("#fileItems").html("");
-        $.get('/repository/items', {path: basePath+pathValue}, function (data, status) {
+        $.get('/repository/items', {path: basePath + pathValue}, function (data, status) {
             showFiles(data);
         })
     }
@@ -277,10 +280,10 @@
     }
     function loadFolders(pathValue) {
         $("#folders").html("");
-        $.get('/repository/folders', {path: basePath+pathValue}, function (data, status) {
+        $.get('/repository/folders', {path: basePath + pathValue}, function (data, status) {
             $.each(data, function (i, item) {
                 $('<li ><a href=""  onclick="changeFolder(\'' +
-                        item.path.replace(basePath,'') +
+                        item.path.replace(basePath, '') +
                         '\'); return false;"><i class="fa fa-folder"></i><span>' + item.name + '</span></a></li>')
                         .appendTo('#folders');
             });
@@ -293,7 +296,7 @@
                 function (i, el) {
                     if (el) {
                         acumulatedPath = acumulatedPath + '/' + el;
-                        pathHtml += '<li><a href="" onclick="changeFolder(\'' +acumulatedPath + '\'); return false;"><span class="text-success"><strong>' + el + '</strong></span></a></li>'
+                        pathHtml += '<li><a href="" onclick="changeFolder(\'' + acumulatedPath + '\'); return false;"><span class="text-success"><strong>' + el + '</strong></span></a></li>'
                     }
                 }
         );
@@ -317,7 +320,7 @@
                 $('#file_tags').importTags('');
             }
             jQuery("#fileModal").modal("show");
-            $("#downloadFile").attr("href", "/repository/item/"+id+"/content");
+            $("#downloadFile").attr("href", "/repository/item/" + id + "/content");
         })
     }
     function deleteCurrentDocument() {
