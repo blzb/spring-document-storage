@@ -95,8 +95,8 @@ class RepositoryController {
     value = "/repository/fullText",
     method = RequestMethod.POST
   )
-  public ResponseEntity fullText(String text) {
-    return new ResponseEntity(repositoryService.query([fullText: text]), HttpStatus.OK);
+  public ResponseEntity fullText(String text, String path) {
+    return new ResponseEntity(repositoryService.query([fullText: text, path: path]), HttpStatus.OK);
   }
 
   @RequestMapping(
@@ -105,9 +105,7 @@ class RepositoryController {
   )
   public ResponseEntity postTags(@PathVariable("id") String id, String tags) {
     if (tags) {
-      println('TAGS::' + tags)
       List<String> tagList = tags.split(',').toList()
-      println('TAGLIST::' + tagList)
       return new ResponseEntity(repositoryService.addTags(id, tagList), HttpStatus.OK);
     }
     return new ResponseEntity('{}', HttpStatus.BAD_REQUEST)

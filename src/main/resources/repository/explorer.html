@@ -339,7 +339,8 @@
     function fullTextSearch() {
         $("#fileItems").html("");
         $.post('/repository/fullText', {
-                    text: $('#full_text').val()
+                    text: $('#full_text').val(),
+                    path: basePath+getCurrentPath()
                 }, function (data) {
                     showFiles(data);
                 }

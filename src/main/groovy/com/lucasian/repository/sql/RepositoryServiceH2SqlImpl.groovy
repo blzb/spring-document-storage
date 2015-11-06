@@ -255,16 +255,20 @@ class RepositoryServiceH2SqlImpl implements RepositoryService {
 
   @Override
   List<RepositoryItem> query(Map<String, ?> filters) {
-    String query
+    String query ="SELECT ${REPOSITORY_ITEMS_FIELDS}"
     Sql sql = new Sql(dataSource)
-    if (filters.containsKey('fullText')) {
-      query = """
-        SELECT ${REPOSITORY_ITEMS_FIELDS} FROM FT_SEARCH_DATA('${filters.get('fullText')}', 0, 0) FT, repository_document T
-        WHERE FT.TABLE='REPOSITORY_DOCUMENT' AND T.ID=FT.KEYS[0] AND T.VERSION = FT.KEYS[1]"""
-      sql.rows(query).collect() {
-        getItem(it).get()
+    if (filters['fullText']) {
+      query += """
+         FROM FT_SEARCH_DATA('${filters.get('fullText')}', 0, 0) FT, repository_document
+        WHERE FT.TABLE='REPOSITORY_DOCUMENT' AND repository_document.ID=FT.KEYS[0] AND repository_document.VERSION = FT.KEYS[1]"""
+      if(filters['path']){
+        query += "AND REPOSITORY_DOCUMENT.path like '${filters['path']}%'"
       }
     }
+    sql.rows(query).collect() {
+      getItem(it).get()
+    }
+
   }
 
   private Map getMaxVersionByPath(String path) {
@@ -332,6 +336,7 @@ class RepositoryServiceH2SqlImpl implements RepositoryService {
     metadata.add(Metadata.RESOURCE_NAME_KEY, repositoryItem.getName())
     String plainText
     plainText = tika.parseToString(inputStream, metadata)
+    println(plainText)
     plainText
   }
 
