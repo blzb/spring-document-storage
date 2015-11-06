@@ -51,10 +51,25 @@ class RepositoryServiceH2SqlImplSpec extends Specification {
     repositoryService.storeItemAndGetId(getTestNode('testFile.doc', 'folder/one'))
     repositoryService.storeItemAndGetId(getTestNode('testFile.jpg', 'folder/one'))
     when:
-    List results = repositoryService.listItemsInPath('folder/one')
+    List results = repositoryService.listItemsInPath('/folder/one')
     then:
     results != null
     results.size() == 4
+  }
+  def 'Should list folder in path'() {
+    setup:
+    repositoryService.storeItemAndGetId(getTestNode('testFile.txt', 'folder/one'))
+    repositoryService.storeItemAndGetId(getTestNode('testFile.jpg', 'folder/one'))
+    repositoryService.storeItemAndGetId(getTestNode('testFile.txt', 'folder/two'))
+    repositoryService.storeItemAndGetId(getTestNode('testFile.jpg', 'folder/two'))
+    when:
+    List<RepositoryItem> results1 = repositoryService.listFoldersInPath('/')
+    List<RepositoryItem> results2 = repositoryService.listFoldersInPath('/folder')
+    then:
+    results1 != null
+    results2 != null
+    results1.size() == 1
+    results2.size() == 2
   }
 
   def 'Should get latest item by path '() {
@@ -64,7 +79,7 @@ class RepositoryServiceH2SqlImplSpec extends Specification {
     repositoryService.storeItemAndGetId(getTestNode('testFile.pdf', 'folder/one'))
     repositoryService.storeItemAndGetId(getTestNode('testFile.pdf', 'folder/one'))
     when:
-    Optional<RepositoryItem> result = repositoryService.getItemByPath('folder/one/testFile.pdf')
+    Optional<RepositoryItem> result = repositoryService.getItemByPath('/folder/one/testFile.pdf')
     then:
     result.isPresent()
     result.get().version == '4'
@@ -112,7 +127,7 @@ class RepositoryServiceH2SqlImplSpec extends Specification {
     repositoryService.storeItemAndGetId(getTestNode('testFile.pdf', 'folder/one'))
     repositoryService.storeItemAndGetId(getTestNode('testFile.pdf', 'folder/one'))
     when:
-    Optional<RepositoryItemContents> result = repositoryService.getContentByPath('folder/one/testFile.pdf')
+    Optional<RepositoryItemContents> result = repositoryService.getContentByPath('/folder/one/testFile.pdf')
     then:
     result.isPresent()
     result.get().binary.size() > 0

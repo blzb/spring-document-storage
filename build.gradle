@@ -55,6 +55,8 @@ dependencies {
   compile 'org.springframework.boot:spring-boot-starter-jdbc:1.2.6.RELEASE'
   compile 'org.apache.tika:tika-core:1.10'
   compile 'org.apache.tika:tika-parsers:1.10'
+  compile 'org.thymeleaf:thymeleaf-spring4:2.1.4.RELEASE'
+  compile 'org.springframework:spring-web:4.1.8.RELEASE'
 
 // We use the awesome Spock testing and specification framework
   testCompile 'org.spockframework:spock-core:1.0-groovy-2.4'

@@ -9,4 +9,5 @@ import groovy.transform.CompileStatic
 class RepositoryItemContents {
     Map metadata
     byte[] binary
+    String mimeType
 }
