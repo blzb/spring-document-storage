@@ -336,7 +336,6 @@ class RepositoryServiceH2SqlImpl implements RepositoryService {
     metadata.add(Metadata.RESOURCE_NAME_KEY, repositoryItem.getName())
     String plainText
     plainText = tika.parseToString(inputStream, metadata)
-    println(plainText)
     plainText
   }
 

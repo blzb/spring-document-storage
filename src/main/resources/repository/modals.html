@@ -1,0 +1,310 @@
+<div class="modal inmodal" id="dropModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content animated flipInY">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span
+                        class="sr-only">Close</span></button>
+                <h4 class="modal-title">Agregar documentos</h4>
+                <small class="font-bold">Aquí puedes agregar documentos arrastrándolos o dando click en el recuadro.
+                </small>
+            </div>
+            <div class="modal-body">
+                <div>
+                    <form id="my-awesome-dropzone" class="dropzone" action="#">
+                        <div class="dz-message" data-dz-message=""><strong>No has subido ningún documento</strong></div>
+                        <div class="dropzone-previews"></div>
+                        <input type="hidden" value="Subscribe me!" th:value="${path}" name="path" id="path"/>
+                    </form>
+                </div>
+
+            </div>
+            <div class="modal-footer">
+                <button id="sendFiles" type="submit" class="btn btn-primary">Guardar documentos</button>
+                <button type="button" class="btn btn-danger" data-dismiss="modal">Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal inmodal" id="folderModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content animated flipInY">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span
+                        class="sr-only">Close</span></button>
+                <h4 class="modal-title">Crear folder</h4>
+                <small class="font-bold">Captura el nombre de la carpeta.
+                </small>
+            </div>
+            <div class="modal-body">
+                <form>
+                    <div class="form-group">
+                        <input type="text" class="form-control" iname="folderName" id="folderName"/>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" onclick="createFolder();">Crear</button>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal inmodal" id="fileModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content animated flipInY">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span
+                        class="sr-only">Close</span></button>
+                <h4 class="modal-title" id="file_name" style="overflow: hidden; text-overflow: ellipsis">Archivo</h4>
+                <small class="font-bold">Detalles del archivo, usa esta pantalla para borrar.
+                </small>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-lg-12">
+                        <dl>
+                            <dt>Id:</dt>
+                            <dd id="file_id"></dd>
+                            <dt>Ubicacion:</dt>
+                            <dd id="file_path"></dd>
+                        </dl>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-lg-4">
+                        <dl>
+                            <dt>Version:</dt>
+                            <dd id="file_version"></dd>
+                        </dl>
+                    </div>
+                    <div class="col-lg-4">
+                        <dl>
+                            <dt>Creacion:</dt>
+                            <dd id="file_creation"></dd>
+                        </dl>
+                    </div>
+                    <div class="col-lg-4">
+                        <dl>
+                            <dt>Tipo:</dt>
+                            <dd id="file_type"></dd>
+                        </dl>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-log-12">
+                        Etiquetas: <input type="text" id="file_tags"/>
+                    </div>
+                </div>
+                <hr/>
+                <!--div class="row m-t-sm">
+                    <table class="table table-striped">
+                        <thead>
+                        <tr>
+                            <th>Version</th>
+                            <th>Fecha de Creacion</th>
+                            <th>Tamaño</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div-->
+            </div>
+            <div class="modal-footer">
+
+                <button type="button" class="btn btn-primary" onclick="updateCurrentTags();">Actualizar Tags</button>
+                <a href="" class="btn btn-primary" id="downloadFile">Descargar</a>
+                <button type="button" class="btn btn-primary" onclick="deleteCurrentDocument();">Borrar</button>
+                <button type="button" class="btn btn-danger" data-dismiss="modal">Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="/inspinia/js/plugins/dropzone/dropzone.js"></script>
+<script>
+    //Modal Config
+    function subirArchivo() {
+        jQuery("#dropModal").modal("show");
+    }
+
+    function getCurrentPath() {
+        return currentPath;
+    }
+    function setCurrentPath(path) {
+        var realPath = basePath + path
+        $('#path').val(realPath);
+        currentPath = path;
+    }
+
+    //Dropzone Config
+
+    Dropzone.options.myAwesomeDropzone = {
+        autoProcessQueue: false,
+        uploadMultiple: false,
+        parallelUploads: 100,
+        maxFiles: 100,
+        paramName: 'file',
+        url: "/repository/upload",
+        // Dropzone settings
+        init: function () {
+            var myDropzone = this;
+            $("#sendFiles").click(
+                    function (e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        myDropzone.processQueue();
+                    }
+            );
+            this.on("sendingmultiple", function () {
+            });
+            this.on("successmultiple", function (files, response) {
+            });
+            this.on("errormultiple", function (files, response) {
+            });
+            this.on("queuecomplete", function (file) {
+
+                var ruta = getCurrentPath();
+                loadFiles(ruta);
+                loadFolders(ruta);
+                myDropzone.removeAllFiles();
+                jQuery("#dropModal").modal("hide");
+            });
+        }
+    };
+    basePath = $('#path').val();
+    if (basePath == '/') {
+        basePath = '';
+    }
+    currentPath = '/';//$('#path').val();
+    refreshAll();
+    $('#file_tags').tagsInput({
+        'width': '100%',
+        'defaultText': 'agregar..',
+    });
+    function refreshAll() {
+        changeFolder(getCurrentPath());
+    }
+    function changeFolder(path) {
+        loadFolders(path);
+        loadFiles(path);
+        printPath(path);
+        setCurrentPath(path)
+    }
+    function openFolderModal() {
+        jQuery("#folderModal").modal("show");
+    }
+    function createFolder() {
+        var path = getCurrentPath();
+        $.post('/repository/createFolder', {
+                    path: basePath + path,
+                    name: $('#folderName').val()
+                }, function (data) {
+                    loadFolders(path);
+                    jQuery("#folderModal").modal("hide");
+                    $('#folderName').val('');
+                }
+        );
+
+    }
+    function loadFiles(pathValue) {
+        $("#fileItems").html("");
+        $.get('/repository/items', {path: basePath + pathValue}, function (data, status) {
+            showFiles(data);
+        })
+    }
+    function showFiles(data) {
+        $.each(data, function (i, item) {
+            $('<div class="file-box"><div class="file"><a href="" onclick="detailDocumentoWithId(\'' + item.id + '\');return false;"><span class="corner"></span><div class="icon"><i class="fa fa-file"></i></div><div class="file-name" style="overflow: hidden; text-overflow: ellipsis">' +
+                    '<span>' +
+                    item.name +
+                    '</span><br/><small>' +
+                    item.lastModifiedDate +
+                    '</small></div></a></div></div>')
+                    .appendTo('#fileItems');
+        });
+    }
+    function loadFolders(pathValue) {
+        $("#folders").html("");
+        $.get('/repository/folders', {path: basePath + pathValue}, function (data, status) {
+            $.each(data, function (i, item) {
+                $('<li ><a href=""  onclick="changeFolder(\'' +
+                        item.path.replace(basePath, '') +
+                        '\'); return false;"><i class="fa fa-folder"></i><span>' + item.name + '</span></a></li>')
+                        .appendTo('#folders');
+            });
+        })
+    }
+    function printPath(pathValue) {
+        var acumulatedPath = '';
+        var pathHtml = '<li><a href="" onclick="changeFolder(\'/\'); return false;"><i class="fa fa-folder-open"></i></a></li>';
+        $(pathValue.split('/')).each(
+                function (i, el) {
+                    if (el) {
+                        acumulatedPath = acumulatedPath + '/' + el;
+                        pathHtml += '<li><a href="" onclick="changeFolder(\'' + acumulatedPath + '\'); return false;"><span class="text-success"><strong>' + el + '</strong></span></a></li>'
+                    }
+                }
+        );
+        $('#ruta').html(pathHtml);
+    }
+    function detailDocumentWithPath(path) {
+    }
+    function detailDocumentoWithId(id) {
+        $.get('/repository/item/' + id, function (data, status) {
+            $("#file_id").html(data.id);
+            $("#file_name").html(data.name);
+            $("#file_version").html(data.version);
+            $("#file_path").html(data.path);
+            $("#file_creation").html(data.createdAtDate);
+            $("#file_modification").html(data.lastModifiedDate);
+            $("#file_type").html(data.mimeType);
+            var tags = data.tags.join(',')
+            if (!!tags) {
+                $("#file_tags").importTags(tags);
+            } else {
+                $('#file_tags').importTags('');
+            }
+            jQuery("#fileModal").modal("show");
+            $("#downloadFile").attr("href", "/repository/item/" + id + "/content");
+        })
+    }
+    function deleteCurrentDocument() {
+        deleteDocumentWithId($('#file_id').html());
+    }
+    function deleteDocumentWithId(id) {
+        $.ajax({
+            url: '/repository/item/' + id,
+            type: 'DELETE',
+            success: function (result) {
+                refreshAll();
+                jQuery("#fileModal").modal("hide");
+            }
+        });
+    }
+    function fullTextSearch() {
+        $("#fileItems").html("");
+        $.post('/repository/fullText', {
+                    text: $('#full_text').val(),
+                    path: basePath + getCurrentPath()
+                }, function (data) {
+                    showFiles(data);
+                }
+        );
+    }
+    function updateCurrentTags() {
+        updateTags($('#file_id').html(), $("#file_tags").val())
+    }
+    function updateTags(id, tags) {
+        if (id) {
+            if (tags) {
+                $.post('/repository/item/' + id + '/tags', {
+                            tags: tags
+                        }, function (data) {
+                            jQuery("#fileModal").modal("hide");
+                        }
+                );
+            }
+        }
+    }
+</script>

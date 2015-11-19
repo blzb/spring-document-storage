@@ -2,13 +2,12 @@ package com.lucasian.repository.taglib
 
 import com.lucasian.repository.RepositoryItem
 import com.lucasian.repository.RepositoryService
+import groovy.util.logging.Slf4j
 import org.thymeleaf.Arguments
 import org.thymeleaf.Configuration
 import org.thymeleaf.TemplateEngine
 import org.thymeleaf.context.Context
 import org.thymeleaf.dom.Element
-import org.thymeleaf.processor.IAttributeNameProcessorMatcher
-import org.thymeleaf.processor.attr.AbstractTextChildModifierAttrProcessor
 import org.thymeleaf.processor.attr.AbstractUnescapedTextChildModifierAttrProcessor
 import org.thymeleaf.standard.expression.IStandardExpression
 import org.thymeleaf.standard.expression.IStandardExpressionParser
@@ -17,17 +16,16 @@ import org.thymeleaf.standard.expression.StandardExpressions
 /**
  * Created by blzb on 10/26/15.
  */
-class RepositoryProcessor extends AbstractUnescapedTextChildModifierAttrProcessor {
-
-  RepositoryService repositoryService
+@Slf4j
+class RepositoryModalProcessor extends AbstractUnescapedTextChildModifierAttrProcessor {
 
   TemplateEngine templateEngine
 
   String templateName
 
 
-  public RepositoryProcessor() {
-    super('path')
+  public RepositoryModalProcessor() {
+    super('modals')
   }
 
   public int getPrecedence() {
@@ -35,7 +33,7 @@ class RepositoryProcessor extends AbstractUnescapedTextChildModifierAttrProcesso
     // SpringStandard dialect. So this attribute will execute
     // after all other attributes from that dialect, if in the
     // same tag.
-    return 10000;
+    return 100000;
   }
 
   //
@@ -57,12 +55,8 @@ class RepositoryProcessor extends AbstractUnescapedTextChildModifierAttrProcesso
       parser.parseExpression(configuration, arguments, attributeValue);
 
     final String path = (String) expression.execute(configuration, arguments);
-    List<RepositoryItem> items = repositoryService.listItemsInPath(path)
-    println('Getting items for :'+items.collect(){it.properties})
     Context context = new Context()
-    context.setVariable('items', items)
     context.setVariable('path', path)
-    context.setVariable('folders', repositoryService.listFoldersInPath(path))
     return templateEngine.process(templateName, context)
   }
 }
